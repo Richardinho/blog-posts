@@ -9,8 +9,9 @@ The original talk can be found [here](https://www.youtube.com/watch?v=CD_t3m2WMM
 
 (Kara promises to post the code on Twitter but whilst the slides were posted, the code does not appear to have been.)
 
-## Custom Form Controls (CCF)
-After a few preliminaries and discussing the new `updateOn` config option, [Kara shows how to implement a Custom Form Control](https://youtu.be/CD_t3m2WMM8?t=550)
+## Custom Form Controls
+After a few preliminaries, Kara demonstrates how to create a Custom Form Control (CCF).
+[link to this item](https://youtu.be/CD_t3m2WMM8?t=550)
 
 The important things to understand about a CCF are:
 * It is a directive that knows how to integrate with Angular's Form API
@@ -32,7 +33,6 @@ These generalise into the following reasons for creating a CCF
 
 Unfortunately, Angular's docs do not give much information about implementing the ControlValueAccessorInterface. Besides this talk that we are discussing, the best resource online that I have found is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
 
-
 The `ControlValueAccessor` interface looks like this, comprising 3 required methods and 1 optional one:
 ```
  writeValue(value: any) {}
@@ -42,14 +42,13 @@ The `ControlValueAccessor` interface looks like this, comprising 3 required meth
 
 ```
 ### Implementing the methods
-#### writeValue()
-This method allows the Forms API to set values into our component within the DOM.
-In order to do this we need a reference to our input field. We get this out using a `@ViewChild` query.
+The `writeValue(`) method allows the Forms API to set values into our component within the DOM.
+In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
 
 ```
   @ViewChild("thisInput") input: ElementRef;
 ```
-Then we use this ref to set the value of the input element.
+We can use this ref to set the value of the input element.
 ```
   writeValue(val: any) {
     if (this.input) {
@@ -61,9 +60,7 @@ Then we use this ref to set the value of the input element.
 An extra check is needed that `this.input` exists before attempting to use it. This check is not needed when using the CFC in a TD form, but is when used in a Reactive form.
 // I should investigate this
 
-#### registerOnChange()
-
-`registerOnChange()` is called by the forms API to pass to our code a callback which we will call whenever there is some change within our component.
+`registerOnChange()` is called by the forms API to pass a callback to our code which we must call whenever there is some change within our component.
 
 In Kara's example, the callback is saved as a property of the component and then called within the template statement that is assigned to the input event of our input element
 
@@ -79,14 +76,14 @@ registerOnChange(fn: (value: any) => void) {
 <input type="text" (input)="onChange($event.target.value)"/>
 
 ```
-When I tried this using Stackblitz, I got an error complaining `Property 'value' does not exist on type 'EventTarget'.`
+When I tried this using Stackblitz, I got an error complaining that `Property 'value' does not exist on type 'EventTarget'.`
 After some investigation, it turned out that the problem was the kind of type checking that is being done within the template.
-This issue is discussed on the Angular Gitub [here](https://github.com/angular/angular/issues/35293)
+This issue is discussed on [Angular's Gitub](https://github.com/angular/angular/issues/35293)
 Whether or not the error occurs depends on the setting of the `strictDomEventTypes` compiler option.
-The Angular docs has this to say about it:
-> Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be any.
+The Angular docs has this to say about that:
+> Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be `any`.
 
-Setting the `strictDomEventTypes` option to *false* fixes the problem. However, it doesn't appear to be possible to do this in Stackblitz. I have raised an issue addressing this problem: https://github.com/stackblitz/core/issues/1334
+Setting the `strictDomEventTypes` option to *false* fixes the problem. However, it doesn't appear to be possible to do this in Stackblitz. I have raised an [issue](https://github.com/stackblitz/core/issues/1334) addressing this problem.
 
 Casting `$event` to type of `any` within the template also fixes the problem:
 
@@ -94,42 +91,16 @@ Casting `$event` to type of `any` within the template also fixes the problem:
 <input (input)="onChange($any($event).target.value)"/>
 ```
 
-We could also pass the $event object directly as an argument and have the component deal with casting, but Angular docs regards this as bad practice and [recommends using a template variable instead](https://angular.io/guide/user-input#passing-event-is-a-dubious-practice), and that was the solution that I settled on:
+Another solution would be to pass the $event object directly as an argument and have the component deal with casting, but Angular docs regards this as bad practice and [recommends using a template variable instead](https://angular.io/guide/user-input#passing-event-is-a-dubious-practice).
+
+Using a template variable was the solution that I settled on:
 
 ```
 <input #thisInput (input)="onChange(thisInput.value)" />
 ```
+The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
 
-### registerOnTouched()
-callback for touched event
-so the forms API can properly toggle the touched property (usually on blur)
-```
-  //  in template
-
-  <input (blur)="onTouched()" />
-
-  // in component
-
-  registerOnTouched(fn: () => void) {
-    this.onTouched = fn;
-  }
-```
-I didn't encounter any problems implementing this.
-
-### setDisabledState()
-model -> view
-So the forms API can programmatically disable the component.
-```
-  //  in template
-  <input [disabled]="disabled" />
-
-  // in component
-
-  setDisabledState(isDisabled: boolean) {
-    this.disabled = isDisabled;
-  }
-```
-
+### Registering the ControlValueAccessor
 Having implemented the ControlValueAccessor interface, there is another step to make to make a CFC work and that is to register this component in the local injector. As often with Angular, there are two ways of doing this (something I call "Angular's rule of 2") and Kara describes both of them.
 
 The first is to register this component class a provider for the NG_VALUE_ACESSOR token in the local element injector.
