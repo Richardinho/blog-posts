@@ -1,5 +1,5 @@
 # Commentary on Kara Erickson's talk on Angular Forms
-This article is a commentary on a talk that was given by Angular core team developer Kara Erickson at Angular Connect 2017.
+This article is a commentary on a talk that was given by Angular Framework Tech Lead Kara Erickson at Angular Connect in 2017.
 
 That talk concerned some advanced topics in relation to Angular forms which, by and large, aren't covered particularly well in the Angular docs themselves, which makes it valuable. Although the talk was given a few years ago, it is still relevant as the API has not changed substantially since then.
 
