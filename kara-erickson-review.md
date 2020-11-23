@@ -1,17 +1,12 @@
-YouTube link
-[ss](https://www.youtube.com/watch?v=CD_t3m2WMM8)
+# Commentary on Kara Erickson's talk on Angular Forms
+This article is a commentary on the talk that was given by Angular core team developer Kara Erickson.
+The talk concerns some advanced topics in relation to Angular forms.
+Although it was given in 2017, the API has not changed substantially since then and so is still relevant.
+These topics are not very well covered in Angular docs so it's very valuable to have a core member of the Angular developers talk about them.
+The biggest shortcoming of the talk is that no code for it was (as far as I am aware) released for the examples given and that code that is on the slides is insufficent for a working implementation. This article is therefore mainly concerned with my endeavors to implement the things she talked about.
+[link to talk](https://www.youtube.com/watch?v=CD_t3m2WMM8)
 
-I was reading an article by Ward Bell in which he argued for the superiority of templated driven forms to Reactive ones in Angular.
-
-I have to admit that the first time I watched this video I was somewhat confused and I've got a lot of experience with working with Angular and Angular forms..
-
-Having watched it several time and investigated what she is talking about, I've reached the conclusion that this is one of these instances where the reason somethings sounds complicated is because it *is* complicated! I feel a similar feeling as I remember having when first reading the documentation for AngularJS's directives. In those days, they had a comments section at the bottom of the page and it was full of similarly bewildered people venting their frustration! (I don't know if that's why they got rid of the comments.)o
-
-1. Angular forms primer
-2. updateOn config property 
-
-
-## 3. Custom Form Controls (CCF)
+## Custom Form Controls (CCF)
 After a few preliminaries and discussing the new `updateOn` config option, [Kara shows how to implement a Custom Form Control](https://youtu.be/CD_t3m2WMM8?t=550)
 
 The important things to understand about a CCF are:
