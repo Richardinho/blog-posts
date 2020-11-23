@@ -1,5 +1,5 @@
 YouTube link
-https://www.youtube.com/watch?v=CD_t3m2WMM8
+[ss](https://www.youtube.com/watch?v=CD_t3m2WMM8)
 
 I was reading an article by Ward Bell in which he argued for the superiority of templated driven forms to Reactive ones in Angular.
 
@@ -10,76 +10,51 @@ Having watched it several time and investigated what she is talking about, I've 
 1. Angular forms primer
 2. updateOn config property 
 
-## 3. Custom Form Controls
-[timestamp](https://youtu.be/CD_t3m2WMM8?t=550)
-> A custom form control is a directive that knows how to integrate with Angular's Form API
 
-Mostly it seems more sensible for a CFC to be a component and not just a directive.
+## 3. Custom Form Controls (CCF)
+After a few preliminaries and discussing the new `updateOn` config option, [Kara shows how to implement a Custom Form Control](https://youtu.be/CD_t3m2WMM8?t=550)
 
-### What is the benefit of a Custom Form control? 
+The important things to understand about a CCF are:
+* It is a directive that knows how to integrate with Angular's Form API
+* It can be used inside a form just like any native element
+* They are built by implementing the `ControlValueAccessor` interface
+* A CFC can be used in both Reactive Forms and Template Driven Forms.
 
-In general, the reasons why you would create a CFC are the same as why you would create a Component:
+### Why would we want to use them?
+Kara gives some examples of CCF. These are:
+* Non-native form control elements
+* Custom styling / functionality
+* Control wrapped with related elements
+* Parser /formatter directive *
 
+These generalise into the following reasons for creating a CCF
 * to break up a template into smaller pieces 
 * to enable encapsulation
 * to faciliate code reuse.
 
-Kara gives some specific examples of CFCs
+Unfortunately, Angular's docs do not give much information about implementing the ControlValueAccessorInterface. Besides this talk that we are discussing, the best resource online that I have found is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
 
-> A custom form control can be used inside a form just like any native element
 
-CFCs can be used in both Reactive Forms and Template Driven Forms.
- 
-Angular's docs do not explain how to create CFCs.
-
-The best explanation of how this works is probably by Jennifer Wadella.
-https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface
-
-This is fairly straightforward although the full code is not supplied so there are a few gaps that require to be filled in order to get this working. My implementation consists of a custom form control with a single input field with validation and an error message. I show it being used both within a template driven form and in a reactive form.
-
-To build a CFC, you need to implement the `ControlValueAccessor` interface.
-This has 3 required methods and 1 optional one
-
-## Examples
-
-[my example](https://stackblitz.com/edit/angular-control-value-accessor-template-driven-example?file=src%2Fapp%2Ffoo%2Ffoo.component.css)
-demonstrates the CFC being used both within a template driven and a reactive form
-
-[ControlValueAccessor implementation using template driven form](https://stackblitz.com/edit/angular-custom-form-control-1)
+The `ControlValueAccessor` interface looks like this, comprising 3 required methods and 1 optional one:
 ```
-
-// write value into dom
-//  model -> view
-writeValue(value: any) {}
-
-
-// callback for when there is a change in the DOM
-//  view -> model
-registerOnChange(fn: (value: any) => void) {}
-
-// callback for touched event
-//  so the forms API can properly toggle the touched property (usually on blur)
-//  view -> model
-registerOnTouched(fn: () => void) {}
-
-//  optional method disable element in view
-// so the form control can be enabled and disabled programmatically
-//  model -> view
-setDisabledState(isDisabled: boolean) {}
-
+ writeValue(value: any) {}
+ registerOnChange(fn: (value: any) => void) {}
+ registerOnTouched(fn: () => void) {}
+ setDisabledState(isDisabled: boolean) {}
 
 ```
-
-Within the CFC, we obtain a reference to the input field itself using a `@ViewChild` query.
+### Implementing the methods
+#### writeValue()
+This method allows the Forms API to set values into our component within the DOM.
+In order to do this we need a reference to our input field. We get this out using a `@ViewChild` query.
 
 ```
   @ViewChild("thisInput") input: ElementRef;
 ```
-
-We use this reference to set the value property of the input element, using the value that is passed to the writeValue method.
+Then we use this ref to set the value of the input element.
 ```
   writeValue(val: any) {
-    if(this.input) {
+    if (this.input) {
       this.input.nativeElement.value = val;
     }
   }
@@ -87,7 +62,6 @@ We use this reference to set the value property of the input element, using the 
 
 An extra check is needed that `this.input` exists before attempting to use it. This check is not needed when using the CFC in a TD form, but is when used in a Reactive form.
 // I should investigate this
-
 
 #### registerOnChange()
 
@@ -106,40 +80,26 @@ registerOnChange(fn: (value: any) => void) {
 
 <input type="text" (input)="onChange($event.target.value)"/>
 
-
 ```
-Stackblitz seems to see $event as of type `InputEvent` with value:
-```
-{isTrusted: true}
-```
-
 When I tried this using Stackblitz, I got an error complaining `Property 'value' does not exist on type 'EventTarget'.`
-There seems to be some confusion about what type `$event` is and there are plenty of StackOverflow questions concerning problems related to this.
+After some investigation, it turned out that the problem was the kind of type checking that is being done within the template.
+This issue is discussed on the Angular Gitub [here](https://github.com/angular/angular/issues/35293)
+Whether or not the error occurs depends on the setting of the `strictDomEventTypes` compiler option.
+The Angular docs has this to say about it:
+> Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be any.
 
-This issue in the Angular Github discusses the problem https://github.com/angular/angular/issues/35293
+Setting the `strictDomEventTypes` option to *false* fixes the problem. However, it doesn't appear to be possible to do this in Stackblitz. I have raised an issue addressing this problem: https://github.com/stackblitz/core/issues/1334
 
-The Angular docs has this to say about this config option
-> strictDomEventTypes	: Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be any.
-
-Setting the strictDomEventTypes option to false fixes the problem. However, it doesn't appear to be possible to do this in Stackblitz. I have raised an issue addressing this problem.https://github.com/stackblitz/core/issues/1334
-
-casting it to type of any within the template also fixes the problem.
+Casting `$event` to type of `any` within the template also fixes the problem:
 
 ```
 <input (input)="onChange($any($event).target.value)"/>
-
-
 ```
 
-
-We could pass the $event object directly as an argument and have the component deal with casting, but Angular docs regards this as bad practice and recommends using a template variable instead.
-https://angular.io/guide/user-input#passing-event-is-a-dubious-practice
+We could also pass the $event object directly as an argument and have the component deal with casting, but Angular docs regards this as bad practice and [recommends using a template variable instead](https://angular.io/guide/user-input#passing-event-is-a-dubious-practice), and that was the solution that I settled on:
 
 ```
-<input
-  #thisInput
-  (input)="onChange(thisInput.value)"
-/>
+<input #thisInput (input)="onChange(thisInput.value)" />
 ```
 
 ### registerOnTouched()
@@ -215,3 +175,15 @@ What is *form projection*?
 What is an *error aggregator*?
 
 "Some kind of form that wraps this error aggregation logic"
+
+
+### Examples
+
+[my example](https://stackblitz.com/edit/angular-control-value-accessor-template-driven-example?file=src%2Fapp%2Ffoo%2Ffoo.component.css)
+demonstrates the CFC being used both within a template driven and a reactive form
+
+* [ControlValueAccessor implementation using template driven form](https://stackblitz.com/edit/angular-custom-form-control-1)
+* [ControlValueAccessor implementation using reactive forms]()
+
+ref
+I don't know exactly what a parser/formatter directive is, and Kara does not go into greater detail. (I guess it's a directive that formats the input as its being entered?)
