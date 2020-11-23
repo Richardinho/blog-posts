@@ -1,11 +1,12 @@
 # Commentary on Kara Erickson's talk on Angular Forms
 This article is a commentary on the [talk](https://www.youtube.com/watch?v=CD_t3m2WMM8) that was given by Angular core team developer Kara Erickson.
 
-That talk concerned some advanced topics in relation to Angular forms which, by and large, aren't covered particularly well in the Angular docs themselves, which makes it very valuable indeed. Although the talk was given in 2017, the API has not changed substantially since then and so it is still relevant.
+That talk concerned some advanced topics in relation to Angular forms which, by and large, aren't covered particularly well in the Angular docs themselves, which makes it valuable. Although the talk was given in 2017, it is still relevant as the API has not changed substantially since then.
 
-The biggest shortcoming of the talk is that whilst it featured a number of code demos, the actual code examples were never released (as far as I am aware).
+The biggest shortcoming of the talk is that whilst it featured a number of code demos, the actual code examples were never released (see footnote).
+This article will discuss my attempts to implement the demos from the talk and to clarify a few things which I myself found a little confusing the first time I listened through it.
 
-
+(Kara promises to post the code on Twitter but whilst the slides were posted, the code does not appear to have been.)
 
 ## Custom Form Controls (CCF)
 After a few preliminaries and discussing the new `updateOn` config option, [Kara shows how to implement a Custom Form Control](https://youtu.be/CD_t3m2WMM8?t=550)
