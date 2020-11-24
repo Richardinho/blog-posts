@@ -160,11 +160,12 @@ Kara does not explain why this code in put in the `ngOnInit()` rather than in th
 ## Nested Forms
 [timestamp](https://youtu.be/CD_t3m2WMM8?t=1522)
 
-What is meant by *nested forms* are components which represent a part of a form, perhaps a set of input components that are grouped conceptually in some ways, e.g. an address.
+A *nested form* is a component that comprises part of a form.
+There are two kinds of nested form components (NFCs) that Kara talks about.
+* *Composite ControlValueAccessor Component*: A ControlValueAccessor component is not restricted to just one input element as in the previous examples. It can contain any number.
+* *Subcomponent*: A Component that contains a form fragment but does not implement the ControlValueAccessor interface.
 
-The first solution given is a nested form component created as a Custom Form Control as was previously described, but possibly containing several input fields rather than just one. This is called a *Composite ControlValueAccessor*. The obvious benefit of this is that the component becomes much easier to use and reuse within the Angular forms framework, and can be used as both part of a template driven form and a reactive form.
 
-This seems to me to be the best of all the solutions given for nested form components and also is the most straightforwards, particularly if you've mastered the single field ControlValueAccessor component. For those who really got lost in the subsequent explanations, I'd recommend just ignoring them and sticking with this one.
 
 
 ### Validation and Error Messages
