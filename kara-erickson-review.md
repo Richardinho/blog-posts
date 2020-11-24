@@ -139,7 +139,7 @@ The reason for the `@Self()` decorator is that we only want to look in the local
 
 Because NgControl also injects value accessors and validators, we can no longer use the providers array to add our component to the set of NG_VALUE_ACCESSORS within the local element injector. 
 
-But recall that what is required is that NgControl know about our ControlValueAccessor. We can do this by manually setting the valueAccessor property of our form control.
+But recall that all that is required is that NgControl know about ControlValueAcessor. We can manually set this in the constructor.
 
 ```
 constructor(@Self() public controlDir: NgControl) {
