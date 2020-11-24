@@ -101,22 +101,63 @@ Using a template variable was the solution that I settled on:
 The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
 
 ### Registering the ControlValueAccessor
-Having implemented the ControlValueAccessor interface, there is another step to make to make a CFC work and that is to register this component in the local injector. As often with Angular, there are two ways of doing this (something I call "Angular's rule of 2") and Kara describes both of them.
+Having implemented the ControlValueAccessor interface, it also has to be available to directives like `ngModel` and `formControlName` which will attempt to inject it. There are two ways to do this.
 
-The first is to register this component class a provider for the NG_VALUE_ACESSOR token in the local element injector.
+The first is to register our component class as a provider for the NG_VALUE_ACCESSOR token within the local element injector.
 
 ``` 
+// in MyComponent
 providers: [
 
   {
     provide: NG_VALUE_ACCESSOR,
     multi: true,
-    useExisting: FooComponent
+    useExisting: MyComponent
   }
 ]
 
 ```
-The NG_VALUE_ACCESSOR is a token that provides classes that implement ControlValueAccessor to forms.
+The `NG_VALUE_ACCESSOR` is a Dependency Injection token representing classes that implement the ControlValueAccessor interface.
+The `multi` property means that we can register multiple providers with the token.
+`useExisting` means that we use the existing instance of MyComponent that the injector has already created.
+
+This works for simple components, but there are circumstances in which a different approach is required.
+Suppose we need a reference to formControl of this component. We might want to do this if we want to query its current status for the purpose of showing error messages. We don't have it directly within the component itself. We can either pass it in from the containing template, or else we can get it via dependency injection. The latter way is the one we will employ.
+```
+constructor(@Self() public controlDir: NgControl) {}
+
+```
+NgControl is the superclass of all form control directives, including NgModel and FormControlName. When we request an object for this class, we get whichever class in the injector is a subclass of this type. Depending on which directive has been inserted upon our component element, e.g. `ngModel` or `formControlName`, we will get an object of that corresponding class back.
+
+So for example, if we configure our component like so:
+```
+<my-component ngModel name="firstName"></my-component>
+```
+Then `controlDir` in the above constructor will be an instance `NgModel`, although it's important to mention that we will only be able to use it as its declared type - `NgControl`, as this is how Typescript works.
+
+The reason for the `@Self()` decorator is that we only want to look in the local element injector for an `NgControl`. If in the case where there has not been a directive applied to our component element, we don't want to reach out to an injector higher up in the injector hierarchy to look for an NgController. If there happens to be one, this could cause our application to work in unexpected and broken ways. The decorator is thus not essential, but its a useful safeguard.
+
+Because NgControl also injects value accessors and validators, we can no longer use the providers array to add our component to the set of NG_VALUE_ACCESSORS within the local element injector. 
+
+But recall that what is required is that NgControl know about our ControlValueAccessor. We can do this by manually setting the valueAccessor property of our form control.
+
+```
+constructor(@Self() public controlDir: NgControl) {
+  controlDir.valueAccessor = controlDir;
+}
+
+```
+Similarily, we can configure the validators within ngOnInit()
+```
+ngOnInit() {
+ const control = this.controlDir.control;
+ control.setValidators(Validators.required);
+ control.updateValueAndValidators();
+}
+```
+// we do this in this method rather than in the constructor?
+
+
 
 ## Nested Forms
 The third thing she talks about.
