@@ -155,13 +155,10 @@ ngOnInit() {
  control.updateValueAndValidity();
 }
 ```
-// we do this in this method rather than in the constructor?
-
-
+Kara does not explain why this code in put in the `ngOnInit()` rather than in the constructor. Putting it in the constructor also seems to work. I assume it's to do with putting as little logic as possible in the constructor, which Angular docs recommnend. (One reason for this is so that in unit tests you can separate out object creation from object behaviour).
 
 ## Nested Forms
-The third thing she talks about.
-This is the part that Ward Bell was confused by, and I don't think that's unreasonable as I found it hard to follow as well.
+[timestamp](https://youtu.be/CD_t3m2WMM8?t=1522)
 
 What is meant by *nested forms* are components which represent a part of a form, perhaps a set of input components that are grouped conceptually in some ways, e.g. an address.
 
