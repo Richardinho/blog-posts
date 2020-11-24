@@ -152,7 +152,7 @@ Similarily, we can configure the validators within ngOnInit()
 ngOnInit() {
  const control = this.controlDir.control;
  control.setValidators(Validators.required);
- control.updateValueAndValidators();
+ control.updateValueAndValidity();
 }
 ```
 // we do this in this method rather than in the constructor?
