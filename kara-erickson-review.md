@@ -266,16 +266,122 @@ Then the form data looks like what we would like it to be:
 ```
 So this is one of the constraints of SFCs. You have to be careful about which components you nest them within and things can behave unexpectedly if you are not.
 
+It should be pointed out that there's a mistake in the slide shown at around 32:50 where the component is called 'RequiredText' instead of 'AddressComponent' as in the example. The released slides correct this error, but this could easily confuse people, as it did me.
+
+#### Sub Form Components with Reactive Forms
+
+Once we create this template within `AddressComponent`:
+```
+   <div formGroupName="address">
+     <input formControlName="street"/>
+     <input formControlName="city"/>
+   </div>
+```
+
+We get the following error 
+```
+Error: Cannot read property 'getFormGroup' of null
+```
+As before, we register the ControlContainer in the viewProviders array, this time assigning it to be a FormGroupDirective instead of NgModelGroup:
+```
+  viewProviders: [
+   { provide: ControlContainer, useExisting: FormGroupDirective}
+  ],
+  ```
+  
+Now we get a different error:
+```
+ERROR
+Error: Cannot find control with name: 'address'
+```
+This is because the `address` FormGroup does not exist. We need to create it within AddressComponent. 
+
+```
+  parent: FormGroupDirective;
+
+  constructor(parent: FormGroupDirective) {
+    //this.form = parent.form;
+    this.parent = parent;
+  }
+
+  ngOnInit() {
+    this.parent.form.addControl('address', new FormGroup({
+      street: new FormControl(),
+      city: new FormControl(),
+    }))
+  }
+
+```
+Note that there's a mistake in the slides. `this.form` within the constructor wont work because parent.form is null at this point.
+Discussion [here](https://github.com/angular/angular/issues/23914)
+
 ## Form Projection
 [talk here](https://youtu.be/CD_t3m2WMM8?t=2213)
 
-What is *form projection*? 
+Form projection is where you project content into a form element. So if you have a component `WrapperComponent` with a template:
+```
+<form #form="ngForm">
+ <ng-content>
+</form>
 
-What is an *error aggregator*?
+<pre>
+  {{ form.value | json }}
+</pre>
+```
+and you use it in another template as follows:
+```
+<my-address>
+  <input name="firstName" ngModel />
+</my-address>
+```
+We would say that the 'first-name' input element is being projected into the form element that lives within the WrapperComponent.
 
-"Some kind of form that wraps this error aggregation logic"
+In the DOM it should look something like this:
+```
+ <form>
+  <input name="firstName"/>
+ </form>
+
+```
+But this doesn't work. We don't get an error message but our form template variable doesn't get populated either. Basically, it seems that the ngModel on our input field isn't communicating with the form directive.
 
 
+
+Kara suggests that you shouldn't be doing this anyway, but it's interesting to try and make it work.
+
+The question is: how do we provide the form that lives in the component view children to the ngModel that lives in the content children?
+
+See an example [here](https://stackblitz.com/edit/angular-form-projection-1)
+I've tried my best to get this working but I've been unsuccessful. I get the following error.
+```
+ERROR
+Error:
+ngModelGroup cannot be used with a parent formGroup directive.
+
+Option 1: Use formGroupName instead of ngModelGroup (reactive strategy):
+
+
+<div [formGroup]="myGroup">
+<div formGroupName="person">
+<input formControlName="firstName">
+</div>
+</div>
+
+In your class:
+
+this.myGroup = new FormGroup({
+person: new FormGroup({ firstName: new FormControl() })
+});
+
+Option 2: Use a regular form tag instead of the formGroup directive (template-driven strategy):
+
+
+<form>
+<div ngModelGroup="person">
+<input [(ngModel)]="person.name" name="firstName">
+</div>
+</form>
+```
 ### Examples
 
 [my example](https://stackblitz.com/edit/angular-control-value-accessor-template-driven-example?file=src%2Fapp%2Ffoo%2Ffoo.component.css)
