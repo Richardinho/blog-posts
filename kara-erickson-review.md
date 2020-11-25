@@ -160,20 +160,111 @@ Kara does not explain why this code in put in the `ngOnInit()` rather than in th
 ## Nested Forms
 [timestamp](https://youtu.be/CD_t3m2WMM8?t=1522)
 
-A *nested form* is a component that comprises part of a form.
+A *nested form* is a component that comprises part of a form. A common example is of an address component that contains separate fields for street, city, postcode etc. The motivation for having a nested form is similar to that of a Custom Form Component - to group related behaviour, for ease of re-use etc.
+
 There are two kinds of nested form components (NFCs) that Kara talks about.
-* *Composite ControlValueAccessor Component*: A ControlValueAccessor component is not restricted to just one input element as in the previous examples. It can contain any number.
-* *Subcomponent*: A Component that contains a form fragment but does not implement the ControlValueAccessor interface.
+* *Composite ControlValueAccessor Component*: A ControlValueAccessor component which contains an arbitrary number of form controls instead of just one.
+* *Sub Form Component*: A Component that contains a form fragment but does not implement the ControlValueAccessor interface.
 
+### Composite ControlValueAccessor Component (CCC)
+[stackblitz example](https://stackblitz.com/edit/angular-composite-control-value-accessor)
 
+Implementing a CCC is largely the same as implementing a CFC. Kara doesn't say anything about validation. Whilst validation and error messages can be self-contained within the component, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
 
+### Sub Form Component (SFC)
+[stackblitz example](https://stackblitz.com/edit/angular-sub-form-component)
 
-### Validation and Error Messages
-She doesn't talk about how to implement validation and error messages for the Composite ControlValueAccessor component, however, so I'm going to discuss how to go about doing this.
+The main difference between this an a CCC is that this does not implement the `ControlValueAccessor` interface. Unfortunately, this doesn't make it less complicated to implement. Arguably, it's more complicated. In Ward Bell's article about Reactive Forms in which he mentions this talk, he complains about being confused by this section.
 
+What I want to do here is explain the issues involved:
 
-Because you have access to the formControl elements within the address component, you can query their status and show or hide error messages accordingly. The problem is that this component can be invalid whilst the form as a whole is valid. We would probably want the entire form to be invalid if any component part of it was invalid, regardless of how many levels nested it was. So how do we do that?
+Supposing we have a form which contains a firstName field, and a group of fields that comprise the address. We might organise this as follows:
+```
+<form #form="ngForm">
 
+  <label for="name">name</label>
+  <input name="firstName" ngModel id="name" required />
+
+  <div ngModelGroup="address">
+    <input ngModel name="city"/>
+    <input ngModel name="postcode"/>
+  </div>
+
+</form>
+```
+The address fields are grouped using the `ngModelGroup` directive.
+Now supposing we want the address section to be its own component. We might create an Address component with a template that looks like this:
+
+```
+   <div ngModelGroup="address">
+    <input ngModel name="city"/>
+    <input ngModel name="postcode"/>
+  </div>
+
+```
+As Kara explains, this results in a `Error: NodeInjector: NOT_FOUND [ControlContainer]` error.
+In this case, the ControlContainer is the container of our subform, which should be the ngForm directive, but our local injector is not able to find it.
+When our ngModelGroup was in the same template as the form element, it could find it, but now that it's in it's own component, it can't.
+
+So why can't our local injector find the ngForm directive? The reason is that ngModelGroup is set up so that when it looks for its ControlContainer, (in this case `ngForm`), it will not look further than the host injector. This is the injector that is configured using the viewProviders array of our sub component.
+
+```
+ viewProviders: [
+    { provide: ControlContainer, useExisting: NgForm}
+  ],
+```
+Now, a problem here is what happens if the containing directive isn't ngForm?
+
+Imagine we change our form so that the address component has as its parent an ngModelGroup instead of an ngModelForm:
+```
+<form #form="ngForm">
+
+  <label for="name">name</label>
+  <input name="firstName" ngModel id="name" required />
+  
+  <div ngModelGroup="home">
+    <input name="telephone" ngModel/>
+    <my-address></my-address>
+  </div>
+
+</form>
+```
+We will find that our form data actually now looks like this:
+```
+{
+  "firstName": "",
+  "home": {
+    "telephone": ""
+  },
+  "address": {
+    "city": "",
+    "postcode": ""
+  }
+}
+```
+But why is address not within home?
+The reason is that the address component still sees the ngForm as its parent because of how we configure its ControlContainer in viewProviders.
+If we change viewProviders so that ControlContainer looks for an NgModelGroup
+``` 
+viewProviders: [
+    { provide: ControlContainer, useExisting: NgModelGroup}
+  ],
+
+```
+Then the form data looks like what we would like it to be:
+```{
+  "firstName": "",
+  "home": {
+    "telephone": "",
+    "address": {
+      "city": "",
+      "postcode": ""
+    }
+  }
+}
+
+```
+So this is one of the constraints of SFCs. You have to be careful about which components you nest them within and things can behave unexpectedly if you are not.
 
 ## Form Projection
 [talk here](https://youtu.be/CD_t3m2WMM8?t=2213)
