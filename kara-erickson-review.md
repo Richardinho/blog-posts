@@ -343,45 +343,18 @@ In the DOM it should look something like this:
  </form>
 
 ```
-But this doesn't work. We don't get an error message but our form template variable doesn't get populated either. Basically, it seems that the ngModel on our input field isn't communicating with the form directive.
+But this doesn't work. We don't get an error message but our form template variable doesn't get populated either. It seems that the ngModel on our input field isn't communicating with the form directive. This is somewhat similar to the problem we face with sub form components. The solution is that we need to find a way for our ngModelGroup to get a reference to the ngForm directive. 
+The difficulty is that ngForm lives in the view child whilst ngModelGroup lives in the content child and these can't directly communicate with one another.
+However, directives in The content child can inject providers that are set in the host component, and the host component can access directives in the view children, so it would seem that within the host component we should be able to extract the form from the view and then make this available to ngModel in the content child.
+ My investigations suggest that it might not even be possible.
+The reason is that we make the ngForm available in the injector using the useFactory() function. But this will run when the constructor for our ngModel directive runs. Because this is in the content children, it runs before the view is actually initialised. Thus, when useFactory runs, it uses a form that doesn't yet exist.
+
+Kara seems to anticipate this problem, but I haven't been able to make her solution work.
+
+I have posted a question on Stackoverflow to see if anyone else has an answer to this problem, but for the moment I do not know how to solve it.
 
 
 
-Kara suggests that you shouldn't be doing this anyway, but it's interesting to try and make it work.
-
-The question is: how do we provide the form that lives in the component view children to the ngModel that lives in the content children?
-
-See an example [here](https://stackblitz.com/edit/angular-form-projection-1)
-I've tried my best to get this working but I've been unsuccessful. I get the following error.
-```
-ERROR
-Error:
-ngModelGroup cannot be used with a parent formGroup directive.
-
-Option 1: Use formGroupName instead of ngModelGroup (reactive strategy):
-
-
-<div [formGroup]="myGroup">
-<div formGroupName="person">
-<input formControlName="firstName">
-</div>
-</div>
-
-In your class:
-
-this.myGroup = new FormGroup({
-person: new FormGroup({ firstName: new FormControl() })
-});
-
-Option 2: Use a regular form tag instead of the formGroup directive (template-driven strategy):
-
-
-<form>
-<div ngModelGroup="person">
-<input [(ngModel)]="person.name" name="firstName">
-</div>
-</form>
-```
 ### Examples
 
 [my example](https://stackblitz.com/edit/angular-control-value-accessor-template-driven-example?file=src%2Fapp%2Ffoo%2Ffoo.component.css)
