@@ -45,8 +45,12 @@ The `ControlValueAccessor` interface looks like this, comprising 3 required meth
 
 I'm going to go through some problems I had implementing the first two of these methods.
 The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
-You can see my implementation [here](https://stackblitz.com/edit/angular-required-text-component)
 
+Here are links to my implementations:
+* [template driven forms](https://stackblitz.com/edit/angular-required-text-component)
+* [reactive forms](https://stackblitz.com/edit/angular-required-text-component-reactive-with-validation)
+
+#### writeValue()
 The `writeValue(`) method allows the Forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
 ```
@@ -60,14 +64,9 @@ We can use this ref to set the value of the input element.
     }
   }
 ```
-This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form.
+This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form. Apparently, the Angular Forms API calls writeValue() before the view has been queried for the input field.
 
-
-
-
-
-
-/////////
+#### registerOnChange()
 `registerOnChange()` is called by the forms API to pass a callback to our code which we must call whenever there is some change within our component.
 
 In Kara's example, the callback is saved as a property of the component and then called within the template statement that is assigned to the input event of our input element
