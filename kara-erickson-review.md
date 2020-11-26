@@ -42,14 +42,15 @@ The `ControlValueAccessor` interface looks like this, comprising 3 required meth
  registerOnTouched(fn: () => void) {}
  setDisabledState(isDisabled: boolean) {}
 ```
-Angular's documentation does not provide much information regarding this interface or how to implement.
-Unfortunately, Angular's docs do not give much information about implementing the ControlValueAccessorInterface. 
-### Implementing the methods
+
+I'm going to go through some problems I had implementing the first two of these methods.
+The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
+You can see my implementation [here](https://stackblitz.com/edit/angular-required-text-component)
+
 The `writeValue(`) method allows the Forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
-
 ```
-  @ViewChild("thisInput") input: ElementRef;
+  @ViewChild("input") input: ElementRef;
 ```
 We can use this ref to set the value of the input element.
 ```
@@ -59,10 +60,14 @@ We can use this ref to set the value of the input element.
     }
   }
 ```
+This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form.
 
-An extra check is needed that `this.input` exists before attempting to use it. This check is not needed when using the CFC in a TD form, but is when used in a Reactive form.
-// I should investigate this
 
+
+
+
+
+/////////
 `registerOnChange()` is called by the forms API to pass a callback to our code which we must call whenever there is some change within our component.
 
 In Kara's example, the callback is saved as a property of the component and then called within the template statement that is assigned to the input event of our input element
@@ -101,7 +106,9 @@ Using a template variable was the solution that I settled on:
 ```
 <input #thisInput (input)="onChange(thisInput.value)" />
 ```
-The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
+
+### Validation and error handling
+Validation is achieved by implementing the Validator interface.
 
 ### Registering the ControlValueAccessor
 Having implemented the ControlValueAccessor interface, it also has to be available to directives like `ngModel` and `formControlName` which will attempt to inject it. There are two ways to do this.
@@ -164,11 +171,10 @@ Kara does not explain why this code in put in the `ngOnInit()` rather than in th
 Lorem ipsum
 
 ### Usage
-Lorem ipsum
-
-
-
-
+CFCs can be used in a form just like native input fields, both in Template-drive and Reactive forms.
+Here's examples of both using the same CFC:
+* [Custom Form Component used within a Templade-Driven form]()
+* [Custom Form Component used within a Reactive form]()
 
 
 ## Nested Forms
