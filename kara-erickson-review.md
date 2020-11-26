@@ -14,14 +14,9 @@ Whilst the information is good, unfortunately the code shown in the demos was ne
 * Projected forms  
 
 ## Custom Form Controls
-After a few preliminaries, Kara demonstrates how to create a Custom Form Control (CCF).
-[link to this item](https://youtu.be/CD_t3m2WMM8?t=550)
+A Custom Form Control (CFC) is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in Angular just as any native input element can be and works with both Reactive and Template Driven forms.
 
-The important things to understand about a CCF are:
-* It is a directive that knows how to integrate with Angular's Form API
-* It can be used inside a form just like any native element
-* They are built by implementing the `ControlValueAccessor` interface
-* A CFC can be used in both Reactive Forms and Template Driven Forms.
+[talk here](https://youtu.be/CD_t3m2WMM8?t=550)
 
 ### Why would we want to use them?
 Kara gives some examples of CCF. These are:
