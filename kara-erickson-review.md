@@ -8,6 +8,10 @@ Whilst the information is good, unfortunately the code shown in the demos was ne
 
 ## Contents
 * Custom Form Controls
+  * Why should you use them?
+  * Implementing the ControlValueAccessor interface
+  * Validation and error handling
+  * Usage
 * Nested forms
   * Composite ControlValueAccessors
   * Sub Forms
@@ -18,28 +22,28 @@ A Custom Form Control (CFC) is a directive that implements the `ControlValueAcce
 
 [talk here](https://youtu.be/CD_t3m2WMM8?t=550)
 
-### Why would we want to use them?
-Kara gives some examples of CCF. These are:
-* Non-native form control elements
-* Custom styling / functionality
-* Control wrapped with related elements
-* Parser /formatter directive *
-
-These generalise into the following reasons for creating a CCF
+### Why would you want to use them?
+The reason you would create a Custom Form Control is the same as for components in general:
 * to break up a template into smaller pieces 
 * to enable encapsulation
 * to faciliate code reuse.
 
-Unfortunately, Angular's docs do not give much information about implementing the ControlValueAccessorInterface. Besides this talk that we are discussing, the best resource online that I have found is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
+Kara gives some specific examples:
+* Non-native form control elements
+* Custom styling / functionality
+* Control wrapped with related elements
+* Parser / formatter directive
 
+### Implementing the ControlValueAccessor interface
 The `ControlValueAccessor` interface looks like this, comprising 3 required methods and 1 optional one:
 ```
  writeValue(value: any) {}
  registerOnChange(fn: (value: any) => void) {}
  registerOnTouched(fn: () => void) {}
  setDisabledState(isDisabled: boolean) {}
-
 ```
+Angular's documentation does not provide much information regarding this interface or how to implement.
+Unfortunately, Angular's docs do not give much information about implementing the ControlValueAccessorInterface. 
 ### Implementing the methods
 The `writeValue(`) method allows the Forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
@@ -155,6 +159,17 @@ ngOnInit() {
 }
 ```
 Kara does not explain why this code in put in the `ngOnInit()` rather than in the constructor. Putting it in the constructor also seems to work. I assume it's to do with putting as little logic as possible in the constructor, which Angular docs recommnend. (One reason for this is so that in unit tests you can separate out object creation from object behaviour).
+
+### Validation and Error Handling
+Lorem ipsum
+
+### Usage
+Lorem ipsum
+
+
+
+
+
 
 ## Nested Forms
 [timestamp](https://youtu.be/CD_t3m2WMM8?t=1522)
@@ -352,7 +367,8 @@ Kara seems to anticipate this problem, but I haven't been able to make her solut
 
 I have posted a question on Stackoverflow to see if anyone else has an answer to this problem, but for the moment I do not know how to solve it.
 
-
+## Resources
+Besides this talk that we are discussing, the best resource online that I have found regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
 
 ### Examples
 
@@ -362,5 +378,4 @@ demonstrates the CFC being used both within a template driven and a reactive for
 * [ControlValueAccessor implementation using template driven form](https://stackblitz.com/edit/angular-custom-form-control-1)
 * [ControlValueAccessor implementation using reactive forms]()
 
-ref
-I don't know exactly what a parser/formatter directive is, and Kara does not go into greater detail. (I guess it's a directive that formats the input as its being entered?)
+
