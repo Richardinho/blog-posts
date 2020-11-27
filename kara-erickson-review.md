@@ -86,6 +86,7 @@ Property 'value' does not exist on type 'EventTarget'.
 The problem is the kind of type-checking that is being done within the template. 
 You configure this with the `strictDomEventTypes` compiler property.
 > Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be `any`.
+
 One solution, therefore, is to set this property to `false`.
 
 As the excerpt from the documentation above suggests, another solution is to cast `$event` to type `any`:
