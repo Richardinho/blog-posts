@@ -345,38 +345,47 @@ Discussion [here](https://github.com/angular/angular/issues/23914)
 ## Form Projection
 [36:54](https://youtu.be/CD_t3m2WMM8?t=2214)
 
-Form projection is where you project content into a form element. So if you have a component `WrapperComponent` with a template:
+Form projection is where you project content into a form element. So if you have a component `FormStepperComponent` with a template:
 ```
-<form #form="ngForm">
- <ng-content>
-</form>
-
-<pre>
-  {{ form.value | json }}
-</pre>
+  <form>
+    <ng-content></ng-content>
+  </form>
 ```
 and you use it in another template as follows:
 ```
-<my-address>
-  <input name="firstName" ngModel />
-</my-address>
+<form-stepper>
+  <step>
+    <div>form content</div>
+    
+    <div ngModelGroup="address">
+      <input name="street" ngModel/>
+      <input name="city" ngModel/>
+    </div>
+  </step>
+</form-stepper>
 ```
-We would say that the 'first-name' input element is being projected into the form element that lives within the WrapperComponent.
+[version 1 of form projection](https://stackblitz.com/edit/angular-form-projection-1)
 
-In the DOM it should look something like this:
+Note the error message:
 ```
- <form>
-  <input name="firstName"/>
- </form>
+NodeInjector: NOT_FOUND [ControlContainer]
+```
+This is similar to the error we got with Sub Form components.
+
+
+Now we provide the ControlContainer in a factory. This gives us a different error
+[version 2 of form projection](https://stackblitz.com/edit/angular-form-projection-2)
 
 ```
-But this doesn't work. We don't get an error message but our form template variable doesn't get populated either. It seems that the ngModel on our input field isn't communicating with the form directive. This is somewhat similar to the problem we face with sub form components. The solution is that we need to find a way for our ngModelGroup to get a reference to the ngForm directive. 
-The difficulty is that ngForm lives in the view child whilst ngModelGroup lives in the content child and these can't directly communicate with one another.
-However, directives in The content child can inject providers that are set in the host component, and the host component can access directives in the view children, so it would seem that within the host component we should be able to extract the form from the view and then make this available to ngModel in the content child.
- My investigations suggest that it might not even be possible.
-The reason is that we make the ngForm available in the injector using the useFactory() function. But this will run when the constructor for our ngModel directive runs. Because this is in the content children, it runs before the view is actually initialised. Thus, when useFactory runs, it uses a form that doesn't yet exist.
+Error:
+ngModelGroup cannot be used with a parent formGroup directive.
+```
 
-Kara seems to anticipate this problem, but I haven't been able to make her solution work.
+I have tried to implement the code described in Kara's talk as closely as possible but I still get the same error as described above.
+[version 3 of form projection](https://stackblitz.com/edit/angular-form-projection-3)
+
+
+[This experiment](https://stackblitz.com/edit/angular-projection-experiment) shows that the factory runs before the view is initialised and so the form that it attempts to register in the injector is still undefined.
 
 I have posted a question on Stackoverflow to see if anyone else has an answer to this problem, but for the moment I do not know how to solve it.
 
