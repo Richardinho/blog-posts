@@ -6,21 +6,15 @@ This talk concerned some advanced topics in relation to Angular forms, such as C
 
 Whilst the information is good, unfortunately the code shown in the demos was never released, as far as I can ascertain. In this article I will discuss my efforts to recreate the code and also clarify a few things from the talk that I initially found confusing.
 
-## Contents
-* Custom Form Controls
-  * Why should you use them?
-  * Implementing the ControlValueAccessor interface
-  * Validation and error handling
-  * Usage
-* Nested forms
-  * Composite ControlValueAccessors
-  * Sub Forms
-* Projected forms  
+The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. Nothing here is particularly difficult.
+
+
+
 
 ## Custom Form Controls
-A Custom Form Control (CFC) is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in Angular just as any native input element can be and works with both Reactive and Template Driven forms.
+[9:02](https://youtu.be/CD_t3m2WMM8?t=542)
 
-[talk here](https://youtu.be/CD_t3m2WMM8?t=550)
+A Custom Form Control (CFC) is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in Angular just as any native input element can be and works with both Reactive and Template Driven forms
 
 ### Why would you want to use them?
 The reason you would create a Custom Form Control is the same as for components in general:
@@ -28,7 +22,7 @@ The reason you would create a Custom Form Control is the same as for components 
 * to enable encapsulation
 * to faciliate code reuse.
 
-Kara gives some specific examples:
+Some specific examples are:
 * Non-native form control elements
 * Custom styling / functionality
 * Control wrapped with related elements
@@ -42,13 +36,8 @@ The `ControlValueAccessor` interface looks like this, comprising 3 required meth
  registerOnTouched(fn: () => void) {}
  setDisabledState(isDisabled: boolean) {}
 ```
-
 I'm going to go through some problems I had implementing the first two of these methods.
 The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
-
-Here are links to my implementations:
-* [template driven forms](https://stackblitz.com/edit/angular-required-text-component)
-* [reactive forms](https://stackblitz.com/edit/angular-required-text-component-reactive-with-validation)
 
 #### writeValue()
 The `writeValue(`) method is called by the forms API to set values into our component within the DOM.
@@ -67,6 +56,7 @@ We can use this ref to set the value of the input element.
 This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form. Apparently, the Angular Forms API calls writeValue() before the view has been queried for the input field.
 
 #### registerOnChange()
+[14:45](https://youtu.be/CD_t3m2WMM8?t=885)
 The `registerOnChange()` method is called by the forms API to pass a callback to our code which we then must call whenever there is some change within our component.
 ```
   // in component
@@ -102,49 +92,56 @@ The solution I settled on was to use a template variable:
 ```
 The `thisInput` template variable refers to the `<input/>` element and is given the correct type by Angular.
 
-### Validation and error handling
-Validation is achieved by implementing the Validator interface.
+registerOnTouched()
 
-### Registering the ControlValueAccessor
-Having implemented the ControlValueAccessor interface, it also has to be available to directives like `ngModel` and `formControlName` which will attempt to inject it. There are two ways to do this.
+setDisabledState()
 
-The first is to register our component class as a provider for the NG_VALUE_ACCESSOR token within the local element injector.
-
+#### Registering with the local injector
+[15:41](https://youtu.be/CD_t3m2WMM8?t=941)
+Having implemented a ControlValueAccessor, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the NG_VALUE_ACCESSOR token.
 ``` 
-// in MyComponent
+// in RequiredText
 providers: [
-
   {
     provide: NG_VALUE_ACCESSOR,
     multi: true,
-    useExisting: MyComponent
+    useExisting: RequiredText
   }
 ]
-
-```
+``` 
 The `NG_VALUE_ACCESSOR` is a Dependency Injection token representing classes that implement the ControlValueAccessor interface.
 The `multi` property means that we can register multiple providers with the token.
-`useExisting` means that we use the existing instance of MyComponent that the injector has already created.
+`useExisting` means that we use the existing instance of MyComponent that the injector has already created. Obviously, RequiredText is already in the injector so we are aliasing it here.
 
-This works for simple components, but there are circumstances in which a different approach is required.
-Suppose we need a reference to formControl of this component. We might want to do this if we want to query its current status for the purpose of showing error messages. We don't have it directly within the component itself. We can either pass it in from the containing template, or else we can get it via dependency injection. The latter way is the one we will employ.
+### Validation
+[16:12](https://youtu.be/CD_t3m2WMM8?t=972)
+
+Validation is achieved by implementing the Validator interface and registering the component using NG_VALIDATORS with the local injector. 
+// show code excerpts
+// link to stackblitz 
+
+## Error Messages
+[19:10](https://youtu.be/CD_t3m2WMM8?t=1150)
+How do we show error messages from within the component itself?
+The problem is that we need to know the validation status of the form control within the component itself, but currently we do not have a reference to this form control. So how do we get this reference?
+One approach is to provide it as an input to our component:
+```
+<required-text formControlName="three" [control]="form.get('three')"></required-text>
+```
+Clearly, though, it would be nicer to not have to do this. It's extra code that we have to write and extra "noise" when looking at the template.
+
+Better is to use Dependency Injection and inject the form control into our component through its constructor function.
+
 ```
 constructor(@Self() public controlDir: NgControl) {}
-
 ```
-NgControl is the superclass of all form control directives, including NgModel and FormControlName. When we request an object for this class, we get whichever class in the injector is a subclass of this type. Depending on which directive has been inserted upon our component element, e.g. `ngModel` or `formControlName`, we will get an object of that corresponding class back.
+This works because when we add a form directive to an element the underlying object is registered with the local injector.
 
-So for example, if we configure our component like so:
-```
-<my-component ngModel name="firstName"></my-component>
-```
-Then `controlDir` in the above constructor will be an instance `NgModel`, although it's important to mention that we will only be able to use it as its declared type - `NgControl`, as this is how Typescript works.
+We specify `NgControl` as the provider as it is the super-type of all form directives that we might have set on our form element, such as `NgModel` and `FormControlName`, so we can use our component with all of these.
 
-The reason for the `@Self()` decorator is that we only want to look in the local element injector for an `NgControl`. If in the case where there has not been a directive applied to our component element, we don't want to reach out to an injector higher up in the injector hierarchy to look for an NgController. If there happens to be one, this could cause our application to work in unexpected and broken ways. The decorator is thus not essential, but its a useful safeguard.
+The @Self decorator is necessary so that we don't look beyond the local element injector for the NgControl instance.
 
-Because NgControl also injects value accessors and validators, we can no longer use the providers array to add our component to the set of NG_VALUE_ACCESSORS within the local element injector. 
-
-But recall that all that is required is that NgControl know about ControlValueAcessor. We can manually set this in the constructor.
+However, now that we are injecting NgControl, we can have a circular dependency because NgControl, (or rather the instances of it, e.g. NgModel), is injecting both `NG_VALUE_ACCESSOR` and `NG_VALIDATOR`, therefore we need to not provide these in our component. This means we have to manually "wire" our component up with the Angular Forms API and add validators to it.
 
 ```
 constructor(@Self() public controlDir: NgControl) {
@@ -160,17 +157,14 @@ ngOnInit() {
  control.updateValueAndValidity();
 }
 ```
-Kara does not explain why this code in put in the `ngOnInit()` rather than in the constructor. Putting it in the constructor also seems to work. I assume it's to do with putting as little logic as possible in the constructor, which Angular docs recommnend. (One reason for this is so that in unit tests you can separate out object creation from object behaviour).
+We can also remove the `validate()` method if we've got it as we're not longer doing validation that way.
+The above code could actually go in the constructor, but it's considered best practice to keep as much logic out of the constructor as possible.
 
-### Validation and Error Handling
-Lorem ipsum
-
-### Usage
-CFCs can be used in a form just like native input fields, both in Template-drive and Reactive forms.
-Here's examples of both using the same CFC:
-* [Custom Form Component used within a Templade-Driven form]()
-* [Custom Form Component used within a Reactive form]()
-
+Now that we have a reference to the formControl, we can now set up the error messages within our component. There's nothing too complicated about this:
+We just query the form control for properties such as `valid` and `pristine` and render an error message accordingly.
+```
+  <div *ngIf="controlDir && !controlDir.control.pristine &&!controlDir.control.valid" class="error">There was an error</div>
+```
 
 ## Nested Forms
 [timestamp](https://youtu.be/CD_t3m2WMM8?t=1522)
