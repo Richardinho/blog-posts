@@ -167,7 +167,7 @@ We just query the form control for properties such as `valid` and `pristine` and
 ```
 
 ## Nested Forms
-[timestamp](https://youtu.be/CD_t3m2WMM8?t=1522)
+[25:22 ](https://youtu.be/CD_t3m2WMM8?t=1522)
 
 A *nested form* is a component that comprises part of a form. A common example is of an address component that contains separate fields for street, city, postcode etc. The motivation for having a nested form is similar to that of a Custom Form Component - to group related behaviour, for ease of re-use etc.
 
@@ -176,16 +176,26 @@ There are two kinds of nested form components (NFCs) that Kara talks about.
 * *Sub Form Component*: A Component that contains a form fragment but does not implement the ControlValueAccessor interface.
 
 ### Composite ControlValueAccessor Component (CCC)
+[26:25](https://youtu.be/CD_t3m2WMM8?t=1585)
+ 
 [stackblitz example](https://stackblitz.com/edit/angular-composite-control-value-accessor)
 
 Implementing a CCC is largely the same as implementing a CFC. Kara doesn't say anything about validation. Whilst validation and error messages can be self-contained within the component, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
 
+This seems to me to be the best way to do nested forms as its the most reusable and flexible. The component works in the same way as any other native input element or Custom Form Component making it easier to compose complex forms out of them.
+
 ### Sub Form Component (SFC)
-[stackblitz example](https://stackblitz.com/edit/angular-sub-form-component)
+[30:19](https://youtu.be/CD_t3m2WMM8?t=1819)
 
-The main difference between this an a CCC is that this does not implement the `ControlValueAccessor` interface. Unfortunately, this doesn't make it less complicated to implement. Arguably, it's more complicated. In Ward Bell's article about Reactive Forms in which he mentions this talk, he complains about being confused by this section.
 
-What I want to do here is explain the issues involved:
+[Sub Form Component using template driven form](https://stackblitz.com/edit/angular-sub-form-component)
+[Sub Form Component using reactive form](https://stackblitz.com/edit/angular-sub-form-component-reactive-form)
+
+The main difference between this an a CCC is that this does not implement the `ControlValueAccessor` interface. Unfortunately, this doesn't make it less complicated to implement: In fact, it's probably it's more complicated. Ward Bell, in an [article](https://medium.com/@wardbell/wow-you-know-i-love-your-articles-we-are-almost-always-on-the-same-wave-length-11e0d53f7da3) about Reactive forms that mentions this talk, comments about being confused by this section.
+
+It should be pointed out that there's a mistake in the slide shown at around 32:50 where the component is called 'RequiredText' instead of 'AddressComponent' as in the example. The released slides correct this error, but this could easily confuse people, as it did me.
+
+Let's have a closer look at what we mean by a *Sub Form Component*.
 
 Supposing we have a form which contains a firstName field, and a group of fields that comprise the address. We might organise this as follows:
 ```
@@ -211,20 +221,29 @@ Now supposing we want the address section to be its own component. We might crea
   </div>
 
 ```
-As Kara explains, this results in a `Error: NodeInjector: NOT_FOUND [ControlContainer]` error.
-In this case, the ControlContainer is the container of our subform, which should be the ngForm directive, but our local injector is not able to find it.
-When our ngModelGroup was in the same template as the form element, it could find it, but now that it's in it's own component, it can't.
+We might just expect this to work since we haven't changed the actual HTML in anyway, but in fact we end up with an error:
+```
+Error: NodeInjector: NOT_FOUND [ControlContainer]
+```
 
-So why can't our local injector find the ngForm directive? The reason is that ngModelGroup is set up so that when it looks for its ControlContainer, (in this case `ngForm`), it will not look further than the host injector. This is the injector that is configured using the viewProviders array of our sub component.
+So what's a `ControlContainer`?
+Angular docs says this:
+> A base class for directives that contain multiple registered instances of NgControl.
 
+If we look at the list of subclasses we see `NgForm` amongst them. From this we can deduce that the `ControlContainer` is in fact our form.
+What is happening is that our component is looking for NgForm in the injector but can't find it for some reason.
+The reason is that `NgForm` is configured that it will only inject an instance of ControlContainer if it exists in an injector that is not higher in the hierarchy of element injectors than that for the template of the host component. 
+
+The way to fix this is to provide NgForm within the viewProviders array of AddressComponent.
 ```
  viewProviders: [
     { provide: ControlContainer, useExisting: NgForm}
   ],
 ```
-Now, a problem here is what happens if the containing directive isn't ngForm?
 
-Imagine we change our form so that the address component has as its parent an ngModelGroup instead of an ngModelForm:
+But what if the ControlContainer isn't NgForm? After all, as we saw earlier, ControlContainer has many subclasses.
+
+Let's investigate. Imagine we change our form so that the address component has as its parent an ngModelGroup instead of an ngModelForm:
 ```
 <form #form="ngForm">
 
@@ -251,9 +270,9 @@ We will find that our form data actually now looks like this:
   }
 }
 ```
-But why is address not within home?
-The reason is that the address component still sees the ngForm as its parent because of how we configure its ControlContainer in viewProviders.
-If we change viewProviders so that ControlContainer looks for an NgModelGroup
+What has happened is that AddressComponent is still configured to see NgForm as its ControlContainer and cannot see the NgModelGroup at all.
+
+If we change viewProviders so that ControlContainer looks for an NgModelGroup instead:
 ``` 
 viewProviders: [
     { provide: ControlContainer, useExisting: NgModelGroup}
@@ -273,11 +292,10 @@ Then the form data looks like what we would like it to be:
 }
 
 ```
-So this is one of the constraints of SFCs. You have to be careful about which components you nest them within and things can behave unexpectedly if you are not.
+This illustrates an important constraint of Sub Form Components: You have to be careful about how you nest them as you may experience unexpected behaviour.
+This same constraint is why Sub Forms are not interchangeable with Reactive and Template Driven forms.
 
-It should be pointed out that there's a mistake in the slide shown at around 32:50 where the component is called 'RequiredText' instead of 'AddressComponent' as in the example. The released slides correct this error, but this could easily confuse people, as it did me.
-
-#### Sub Form Components with Reactive Forms
+Lets look at a Sub Form as implemented for Reactive forms.
 
 Once we create this template within `AddressComponent`:
 ```
@@ -325,7 +343,7 @@ Note that there's a mistake in the slides. `this.form` within the constructor wo
 Discussion [here](https://github.com/angular/angular/issues/23914)
 
 ## Form Projection
-[talk here](https://youtu.be/CD_t3m2WMM8?t=2213)
+[36:54](https://youtu.be/CD_t3m2WMM8?t=2214)
 
 Form projection is where you project content into a form element. So if you have a component `WrapperComponent` with a template:
 ```
@@ -365,12 +383,5 @@ I have posted a question on Stackoverflow to see if anyone else has an answer to
 ## Resources
 Besides this talk that we are discussing, the best resource online that I have found regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
 
-### Examples
-
-[my example](https://stackblitz.com/edit/angular-control-value-accessor-template-driven-example?file=src%2Fapp%2Ffoo%2Ffoo.component.css)
-demonstrates the CFC being used both within a template driven and a reactive form
-
-* [ControlValueAccessor implementation using template driven form](https://stackblitz.com/edit/angular-custom-form-control-1)
-* [ControlValueAccessor implementation using reactive forms]()
 
 
