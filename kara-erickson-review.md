@@ -67,8 +67,8 @@ We can use this ref to set the value of the input element.
 This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form. Apparently, the Angular Forms API calls writeValue() before the view has been queried for the input field.
 
 #### registerOnChange()
-The `registerOnChange()` method is called by the forms API to pass a callback to our code which we must call whenever there is some change within our component.
-The callback is saved as a property of the component and then called within the template statement that is assigned to the input event of our input element
+The `registerOnChange()` method is called by the forms API to pass a callback to our code which we must then call whenever there is some change within our component.
+The callback is saved as a property of the component and then called within the template statement that is assigned to the input event of our input element:
 ```
   // in component
 
@@ -80,14 +80,13 @@ The callback is saved as a property of the component and then called within the 
 
   <input type="text" (input)="onChange($event.target.value)"/>
 ```
-When I tried this using Stackblitz, I got an error:
+However, when I tried this using Stackblitz, I got an error:
 ```
 Property 'value' does not exist on type 'EventTarget'.
 ```
 After some investigation, it turned out that the problem was the kind of type checking that is being done within the template.
 This issue is discussed on [Angular's Gitub](https://github.com/angular/angular/issues/35293)
-Whether or not the error occurs depends on the setting of the `strictDomEventTypes` compiler option.
-The Angular docs has this to say about that:
+Whether or not the error occurs depends on the setting of the `strictDomEventTypes` compiler option. According to the Angular docs:
 > Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be `any`.
 
 Setting the `strictDomEventTypes` option to false fixes the problem. However, it doesn't appear to be possible to do this in Stackblitz. I have raised an [issue](https://github.com/stackblitz/core/issues/1334) addressing this problem.
@@ -102,7 +101,6 @@ Using a template variable was the solution that I settled on:
 ```
 <input #thisInput (input)="onChange(thisInput.value)" />
 ```
-
 ### Validation and error handling
 Validation is achieved by implementing the Validator interface.
 
