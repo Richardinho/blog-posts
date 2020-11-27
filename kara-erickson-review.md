@@ -67,8 +67,7 @@ We can use this ref to set the value of the input element.
 This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form. Apparently, the Angular Forms API calls writeValue() before the view has been queried for the input field.
 
 #### registerOnChange()
-The `registerOnChange()` method is called by the forms API to pass a callback to our code which we must then call whenever there is some change within our component.
-The callback is saved as a property of the component and then called within the template statement that is assigned to the input event of our input element:
+The `registerOnChange()` method is called by the forms API to pass a callback to our code which we then must call whenever there is some change within our component.
 ```
   // in component
 
@@ -80,27 +79,28 @@ The callback is saved as a property of the component and then called within the 
 
   <input type="text" (input)="onChange($event.target.value)"/>
 ```
-However, when I tried this using Stackblitz, I got an error:
+Depending on the environment, this can cause the following error:
 ```
 Property 'value' does not exist on type 'EventTarget'.
 ```
-After some investigation, it turned out that the problem was the kind of type checking that is being done within the template.
-This issue is discussed on [Angular's Gitub](https://github.com/angular/angular/issues/35293)
-Whether or not the error occurs depends on the setting of the `strictDomEventTypes` compiler option. According to the Angular docs:
+The problem is the kind of type-checking that is being done within the template. 
+You configure this with the `strictDomEventTypes` compiler property.
 > Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be `any`.
+One solution, therefore, is to set this property to `false`.
 
-Setting the `strictDomEventTypes` option to false fixes the problem. However, it doesn't appear to be possible to do this in Stackblitz. I have raised an [issue](https://github.com/stackblitz/core/issues/1334) addressing this problem.
-
-Casting `$event` to type `any` within the template also fixes the problem:
+As the excerpt from the documentation above suggests, another solution is to cast `$event` to type `any`:
 ```
 <input (input)="onChange($any($event).target.value)"/>
 ```
-Another solution would be to pass the `$event` object directly as an argument and have the component deal with casting, but Angular docs regards this as bad practice and recommends using a template variable instead: [Angular docs](https://angular.io/guide/user-input#passing-event-is-a-dubious-practice).
+You could also pass `$event` as the argument to the `onChange()` method and let the component handle casting, 
+but this is regarded as [bad practise](https://angular.io/guide/user-input#passing-event-is-a-dubious-practice).
 
-Using a template variable was the solution that I settled on:
+The solution I settled on was to use a template variable:
 ```
 <input #thisInput (input)="onChange(thisInput.value)" />
 ```
+The `thisInput` template variable refers to the `<input/>` element and is given the correct type by Angular.
+
 ### Validation and error handling
 Validation is achieved by implementing the Validator interface.
 
