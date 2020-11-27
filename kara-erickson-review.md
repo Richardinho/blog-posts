@@ -8,9 +8,6 @@ Whilst the information is good, unfortunately the code shown in the demos was ne
 
 The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. Nothing here is particularly difficult.
 
-
-
-
 ## Custom Form Controls
 [9:02](https://youtu.be/CD_t3m2WMM8?t=542)
 
@@ -39,7 +36,7 @@ The `ControlValueAccessor` interface looks like this, comprising 3 required meth
 I'm going to go through some problems I had implementing the first two of these methods.
 The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
 
-#### writeValue()
+### writeValue()
 The `writeValue(`) method is called by the forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
 ```
@@ -55,7 +52,7 @@ We can use this ref to set the value of the input element.
 ```
 This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form. Apparently, the Angular Forms API calls writeValue() before the view has been queried for the input field.
 
-#### registerOnChange()
+### registerOnChange()
 [14:45](https://youtu.be/CD_t3m2WMM8?t=885)
 The `registerOnChange()` method is called by the forms API to pass a callback to our code which we then must call whenever there is some change within our component.
 ```
@@ -96,7 +93,7 @@ registerOnTouched()
 
 setDisabledState()
 
-#### Registering with the local injector
+### Registering with the local injector
 [15:41](https://youtu.be/CD_t3m2WMM8?t=941)
 Having implemented a ControlValueAccessor, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the NG_VALUE_ACCESSOR token.
 ``` 
@@ -120,7 +117,7 @@ Validation is achieved by implementing the Validator interface and registering t
 // show code excerpts
 // link to stackblitz 
 
-## Error Messages
+### Error Messages
 [19:10](https://youtu.be/CD_t3m2WMM8?t=1150)
 How do we show error messages from within the component itself?
 The problem is that we need to know the validation status of the form control within the component itself, but currently we do not have a reference to this form control. So how do we get this reference?
