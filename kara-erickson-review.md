@@ -54,6 +54,7 @@ This differs from Kara's example in that an extra check is needed that `this.inp
 
 ### registerOnChange()
 [14:45](https://youtu.be/CD_t3m2WMM8?t=885)
+
 The `registerOnChange()` method is called by the forms API to pass a callback to our code which we then must call whenever there is some change within our component.
 ```
   // in component
@@ -95,6 +96,7 @@ setDisabledState()
 
 ### Registering with the local injector
 [15:41](https://youtu.be/CD_t3m2WMM8?t=941)
+
 Having implemented a ControlValueAccessor, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the NG_VALUE_ACCESSOR token.
 ``` 
 // in RequiredText
@@ -119,6 +121,7 @@ Validation is achieved by implementing the Validator interface and registering t
 
 ### Error Messages
 [19:10](https://youtu.be/CD_t3m2WMM8?t=1150)
+
 How do we show error messages from within the component itself?
 The problem is that we need to know the validation status of the form control within the component itself, but currently we do not have a reference to this form control. So how do we get this reference?
 One approach is to provide it as an input to our component:
