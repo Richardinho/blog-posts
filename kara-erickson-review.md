@@ -5,12 +5,14 @@ This talk concerned some advanced topics in relation to Angular forms, such as C
 
 Whilst the information is good, unfortunately the code shown in the demos was never released, as far as I can ascertain. In this article I will discuss my efforts to recreate the code and also clarify a few things from the talk that I initially found confusing.
 
+The prerequisite for reading this article is that you have watched this video (and presumably know something about Angular).
+
 The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. It's fairly uncontroversial so I'm skipping that.
 
 ## Custom Form Controls
 [9:02](https://youtu.be/CD_t3m2WMM8?t=542)
 
-A Custom Form Control (CFC) is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in Angular just as any native input element can be and works with both Reactive and Template Driven forms
+A Custom Form Control is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in an Angular form just as any native input element can be. It also works interchangeably with both Reactive and Template Driven forms. So once you have created a Custom Form Control, it can be used with both of these forms modules. 
 
 ### Why would you want to use them?
 [9:15](https://youtu.be/CD_t3m2WMM8?t=555)
@@ -30,6 +32,7 @@ Some specific examples are:
 [12:25](https://youtu.be/CD_t3m2WMM8?t=745)
 
 The `ControlValueAccessor` interface looks like this, comprising 3 required methods and 1 optional one:
+//todo: fix this interface
 ```
   writeValue(value: any) {}
   registerOnChange(fn: (value: any) => void) {}
@@ -55,12 +58,12 @@ We can use this ref to set the value of the input element.
     }
   }
 ```
-This differs from Kara's example in that an extra check is needed that `this.input` exists before attempting to use it. This check is needed when the CFC is used in a Reactive form, but not when used in a Template Driven form. Apparently, the Angular Forms API calls writeValue() before the view has been queried for the input field.
+This differs from Kara's example in that an extra check is needed to make sure that the `input` property exists before attempting to use it. This check is needed when the component is used in a Reactive form, but not in a Template Driven form. Apparently, the Angular Reactive Forms API calls `writeValue()` before  `input` is set.
 
 ### registerOnChange()
 [14:45](https://youtu.be/CD_t3m2WMM8?t=885)
 
-The `registerOnChange()` method is called by the forms API to pass a callback to our code which we then must call whenever there is some change within our component.
+The `registerOnChange()` method is called by the forms API to pass a callback to our code which we must call whenever there is a change within our component.
 ```
   // in component
 
@@ -76,8 +79,8 @@ Depending on the environment, this can cause the following error:
 ```
 Property 'value' does not exist on type 'EventTarget'.
 ```
-The problem is the kind of type-checking that is being done within the template. 
-You configure this with the `strictDomEventTypes` compiler property.
+This is a Typescript problem. Typescript for some reason can't determine the correct type of `$event`.
+This is configurable using the `strictDOMEventTypes` option. The docs say this about it:
 > Whether $event will have the correct type for event bindings to DOM events. If disabled, it will be `any`.
 
 One solution, therefore, is to set this property to `false`.
@@ -95,14 +98,10 @@ The solution I settled on was to use a template variable:
 ```
 The `thisInput` template variable refers to the `<input/>` element and is given the correct type by Angular.
 
-registerOnTouched()
-
-setDisabledState()
-
 ### Registering with the local injector
 [15:41](https://youtu.be/CD_t3m2WMM8?t=941)
 
-Having implemented a ControlValueAccessor, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the NG_VALUE_ACCESSOR token.
+Having implemented a `ControlValueAccessor`, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the NG_VALUE_ACCESSOR token.
 ``` 
 // in RequiredText
 providers: [
@@ -113,9 +112,11 @@ providers: [
   }
 ]
 ``` 
-The `NG_VALUE_ACCESSOR` is a Dependency Injection token representing classes that implement the ControlValueAccessor interface.
+The `NG_VALUE_ACCESSOR` is a Dependency Injection token representing classes that implement the `ControlValueAccessor` interface.
 The `multi` property means that we can register multiple providers with the token.
 `useExisting` means that we use the existing instance of MyComponent that the injector has already created. Obviously, RequiredText is already in the injector so we are aliasing it here.
+
+[code example](https://stackblitz.com/edit/angular-required-text-component)
 
 ### Validation
 [16:12](https://youtu.be/CD_t3m2WMM8?t=972)
