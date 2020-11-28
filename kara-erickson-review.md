@@ -1,12 +1,11 @@
 # Commentary on Kara Erickson's talk on Angular Forms
-This article is a commentary on a talk that was given by Angular Core developer Kara Erickson at Angular Connect in 2017.
-Link [here](https://www.youtube.com/watch?v=CD_t3m2WMM8)
+This article is a commentary on a [talk](https://www.youtube.com/watch?v=CD_t3m2WMM8) that was given by Angular Core developer Kara Erickson at Angular Connect in 2017.
 
 This talk concerned some advanced topics in relation to Angular forms, such as Custom Form Controls, nested forms, and form projection, important subjects which, by and large, aren't covered particularly well in the Angular docs themselves. Although the talk was given a few years ago, it is still relevant as the API has not changed substantially since then.
 
 Whilst the information is good, unfortunately the code shown in the demos was never released, as far as I can ascertain. In this article I will discuss my efforts to recreate the code and also clarify a few things from the talk that I initially found confusing.
 
-The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. Nothing here is particularly difficult.
+The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. It's fairly uncontroversial so I'm skipping that.
 
 ## Custom Form Controls
 [9:02](https://youtu.be/CD_t3m2WMM8?t=542)
@@ -43,7 +42,7 @@ The two remaining methods, `registerOnTouched()` and `setDisabledState()` were s
 ### writeValue()
 [14:30](https://youtu.be/CD_t3m2WMM8?t=870)
 
-The `writeValue(`) method is called by the forms API to set values into our component within the DOM.
+The `writeValue()` method is called by the forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
 ```
   @ViewChild("input") input: ElementRef;
@@ -188,7 +187,7 @@ There are two kinds of nested form components (NFCs) that Kara talks about.
 
 Implementing a CCC is largely the same as implementing a CFC. Kara doesn't say anything about validation. Whilst validation and error messages can be self-contained within the component, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
 
-This seems to me to be the best way to do nested forms as its the most reusable and flexible. The component works in the same way as any other native input element or Custom Form Component making it easier to compose complex forms out of them.
+This seems to me to be the best way to do nested forms: It gives the greatest amount of flexibility and reusability. The component works in the same way as a native input element making it easier to compose complex forms out of them.
 
 ### Sub Form Component (SFC)
 [30:19](https://youtu.be/CD_t3m2WMM8?t=1819)
