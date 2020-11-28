@@ -7,12 +7,12 @@ Whilst the information is good, unfortunately the code shown in the demos was ne
 
 The prerequisite for reading this article is that you have watched this video (and presumably know something about Angular).
 
-The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. It's fairly uncontroversial so I'm skipping that.
+The first nine minutes of the talk comprises a refresher on Angular forms and an introduction to the (then) new `updateOn` option. It's fairly uncontroversial so I'm not going to discuss that.
 
 ## Custom Form Controls
 [9:02](https://youtu.be/CD_t3m2WMM8?t=542)
 
-A Custom Form Control is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in an Angular form just as any native input element can be. It also works interchangeably with both Reactive and Template Driven forms. So once you have created a Custom Form Control, it can be used with both of these forms modules. 
+A Custom Form Control is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in an Angular form just as any native input element can be. It also works interchangeably with both Reactive and Template Driven forms. So once you have created a Custom Form Control, it can be used with both of these form modules. 
 
 ### Why would you want to use them?
 [9:15](https://youtu.be/CD_t3m2WMM8?t=555)
@@ -20,7 +20,7 @@ A Custom Form Control is a directive that implements the `ControlValueAccessor` 
 The reason you would create a Custom Form Control is the same as for components in general:
 * to break up a template into smaller pieces 
 * to enable encapsulation
-* to faciliate code reuse.
+* to facilitate code reuse.
 
 Some specific examples are:
 * Non-native form control elements
@@ -32,7 +32,7 @@ Some specific examples are:
 [12:25](https://youtu.be/CD_t3m2WMM8?t=745)
 
 The `ControlValueAccessor` interface looks like this, comprising 3 required methods and 1 optional one:
-//todo: fix this interface
+
 ```
   writeValue(value: any) {}
   registerOnChange(fn: (value: any) => void) {}
@@ -40,17 +40,17 @@ The `ControlValueAccessor` interface looks like this, comprising 3 required meth
   setDisabledState(isDisabled: boolean) {}
 ```
 I'm going to go through some problems I had implementing the first two of these methods.
-The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
+The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with any problems.
 
 ### writeValue()
 [14:30](https://youtu.be/CD_t3m2WMM8?t=870)
 
-The `writeValue()` method is called by the forms API to set values into our component within the DOM.
+The `writeValue()` method is called by the Forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
 ```
   @ViewChild("input") input: ElementRef;
 ```
-We can use this ref to set the value of the input element.
+We can use this reference to set the value of the input element:
 ```
   writeValue(val: any) {
     if (this.input) {
@@ -58,12 +58,12 @@ We can use this ref to set the value of the input element.
     }
   }
 ```
-This differs from Kara's example in that an extra check is needed to make sure that the `input` property exists before attempting to use it. This check is needed when the component is used in a Reactive form, but not in a Template Driven form. Apparently, the Angular Reactive Forms API calls `writeValue()` before  `input` is set.
+This differs from Kara's example in that an extra check is needed to make sure that the `input` property exists before attempting to use it. This check is needed when the component is used in a Reactive form, but not when it's used in a Template Driven form. Apparently, the Angular Reactive Forms API calls `writeValue()` before  `input` is set.
 
 ### registerOnChange()
 [14:45](https://youtu.be/CD_t3m2WMM8?t=885)
 
-The `registerOnChange()` method is called by the forms API to pass a callback to our code which we must call whenever there is a change within our component.
+The `registerOnChange()` method is called by the Forms API to pass a callback to our code which we must then call whenever there is a change within our component.
 ```
   // in component
 
@@ -75,7 +75,7 @@ The `registerOnChange()` method is called by the forms API to pass a callback to
 
   <input type="text" (input)="onChange($event.target.value)"/>
 ```
-Depending on the environment, this can cause the following error:
+Depending on the environment, the above code can cause the following error:
 ```
 Property 'value' does not exist on type 'EventTarget'.
 ```
@@ -112,16 +112,16 @@ providers: [
   }
 ]
 ``` 
-The `NG_VALUE_ACCESSOR` is a Dependency Injection token representing classes that implement the `ControlValueAccessor` interface.
-The `multi` property means that we can register multiple providers with the token.
-`useExisting` means that we use the existing instance of MyComponent that the injector has already created. Obviously, RequiredText is already in the injector so we are aliasing it here.
+`NG_VALUE_ACCESSOR` is a Dependency Injection token representing classes that implement the `ControlValueAccessor` interface.
+The `multi` property means that we can register multiple providers with this token.
+`useExisting` means that we use the existing instance of the `RequiredText` component that the injector has already created.
 
 [code example](https://stackblitz.com/edit/angular-required-text-component)
 
 ### Validation
 [16:12](https://youtu.be/CD_t3m2WMM8?t=972)
 
-Validation is achieved by implementing the Validator interface and registering the component using `NG_VALIDATORS` with the local injector. 
+Validation is achieved by implementing the Validator interface and registering the component using the `NG_VALIDATORS` token in the local injector. 
 ```
   providers: [
     {
@@ -142,7 +142,7 @@ Validation is achieved by implementing the Validator interface and registering t
 ### Error Messages
 [19:10](https://youtu.be/CD_t3m2WMM8?t=1150)
 
-In order to show error messages within the component itself, we need to get a reference to the components form control. How do we get this?
+In order to show error messages within the component itself, we need to get a reference to the component's form control. How do we get this?
 One approach is to provide it as an input to our component.
 This is how we'd do it in a reactive form:
 ```
@@ -160,9 +160,9 @@ This works because when we add a form directive to an element the underlying obj
 
 We specify `NgControl` as the provider as it is the super-type of all form directives that we might have set on our form element, such as `NgModel` and `FormControlName`, so we can use our component with all of these.
 
-The @Self decorator is necessary so that we don't look beyond the local element injector for the NgControl instance.
+The `@Self` decorator is necessary so that we don't look beyond the local element injector for the NgControl instance.
 
-However, now that we are injecting `NgControl`, we can have a circular dependency because `NgControl`, (or rather the instances of it, e.g. `NgModel`), is injecting both `NG_VALUE_ACCESSOR` and `NG_VALIDATOR`, therefore we need to not provide these in our component. This means we have to manually "wire" our component up with the Angular Forms API and add validators to it.
+However, now that we are injecting `NgControl`, we can have a circular dependency because `NgControl`, (or rather the instances of it, e.g. `NgModel`), is injecting both `NG_VALUE_ACCESSOR` and `NG_VALIDATOR`, therefore we need to not provide these in our component. This means we have to manually wire our component up with the Angular Forms API and add validators to it.
 
 ```
 constructor(@Self() public controlDir: NgControl) {
@@ -178,7 +178,7 @@ ngOnInit() {
   control.updateValueAndValidity();
 }
 ```
-We can also remove the `validate()` method if we've got it as we're not longer doing validation that way.
+We can also remove the `validate()` method if we've got it as we're no longer doing validation that way.
 The above code could actually go in the constructor, but it's considered best practice to keep as much logic out of the constructor as possible.
 
 Now that we have a reference to the formControl, we can now set up the error messages within our component. There's nothing too complicated about this:
@@ -191,7 +191,7 @@ We just query the form control for properties such as `valid` and `pristine` and
 ## Nested Forms
 [25:22 ](https://youtu.be/CD_t3m2WMM8?t=1522)
 
-A *nested form* is a component that comprises part of a form. A common example is of an address component that contains separate fields for street, city, postcode etc. The motivation for having a nested form is similar to that of a Custom Form Component - to group related behaviour, for ease of re-use etc.
+A *nested form* is a component that comprises part of a form. A common example is an address component that contains separate fields for street, city, postcode etc. The motivation for having a nested form is similar to that of a Custom Form Component - to group related behaviour, for ease of re-use etc.
 
 There are two kinds of nested form components that Kara talks about.
 * *Composite ControlValueAccessor Component*: A `ControlValueAccessor` component which contains an arbitrary number of form controls instead of just one.
@@ -202,13 +202,13 @@ There are two kinds of nested form components that Kara talks about.
 
 Implementing a Composite `ControlValueAccessor` is largely the same as implementing the kind that we've already seen. 
 
-In the talk, Kara doesn't say anything about validation. Whilst validation and error messages can be self-contained within the component, and we don't have to pass in the form control, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
+This seems to me to be the best way to do nested forms: It gives the greatest amount of flexibility and reusability. The component works in the same way as a native input element, making it easier to compose complex forms out of them.
 
-This seems to me to be the best way to do nested forms: It gives the greatest amount of flexibility and reusability. The component works in the same way as a native input element, making it easier to compose complex forms with them.
+Whilst validation and error messages can be self-contained within the component, and we don't have to pass in the form control, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
 
 [code example](https://stackblitz.com/edit/angular-composite-control-value-accessor)
 
-### Sub Form Component (SFC)
+### Sub Form Component
 [30:19](https://youtu.be/CD_t3m2WMM8?t=1819)
 
 The main difference between this and a Composite `ControlValueAccessor` is that this does not implement that interface. Unfortunately, this doesn't make it less complicated: Arguably, it's more so.
@@ -264,8 +264,6 @@ The way to fix this is to provide `NgForm` within the `viewProviders` array of `
 
 But what if the `ControlContainer` isn't `NgForm`? After all, as we saw earlier, `ControlContainer` has many subclasses.
 
-Let's investigate. 
-
 Imagine we change our form so that the address component has as its parent an `ngModelGroup` instead of an `ngModelForm`:
 ```
 <form #form="ngForm">
@@ -280,7 +278,7 @@ Imagine we change our form so that the address component has as its parent an `n
 
 </form>
 ```
-We will find that our form data actually now looks like this:
+We will find that our form data now looks like this:
 ```
 {
   "firstName": "",
@@ -296,9 +294,9 @@ We will find that our form data actually now looks like this:
 Contrary to what we might expect, `address` is not nested within `home`.
 What has happened is that the Address Component is still configured to see `NgForm` as its `ControlContainer` and cannot see the `NgModelGroup` at all.
 
-If we change viewProviders so that `ControlContainer` looks for an `NgModelGroup` instead:
+If we change `viewProviders` so that `ControlContainer` looks for an `NgModelGroup` instead:
 ``` 
-viewProviders: [
+  viewProviders: [
     { provide: ControlContainer, useExisting: NgModelGroup}
   ],
 
@@ -330,7 +328,6 @@ Once we create this template within `AddressComponent`:
      <input formControlName="city"/>
    </div>
 ```
-
 We get the following error 
 ```
 Error: Cannot read property 'getFormGroup' of null
@@ -374,7 +371,7 @@ There's a discussion about this [here](https://github.com/angular/angular/issues
 [36:54](https://youtu.be/CD_t3m2WMM8?t=2214)
 
 Form projection is where you project content into a form element. 
-E.g, you have a wrapper component something like this:
+E.g, you have a wrapper component that looks something like this:
 ```
 <form>
   <ng-content></ng-content>
@@ -386,7 +383,7 @@ And it's used like this:
   <input />
 </wrapper-component>
 ```
-the `<input/>` element will be *projected* into the form so that the final DOM looks like:
+The `<input/>` element will be *projected* into the form so that the final DOM looks like:
 ```
 <form>
   <input/>
@@ -414,14 +411,14 @@ For the `FormStepper` component we have a View Child, in which the `<form>` exis
 The View Child and the Content Child are not able to directly contact each other: they must do so through the component.
 
 Within the component, we obtain the `NgForm` directive using a `@ViewChild` query.
-We then provide this to the Content Child by adding it to the `Providers` array using `useFactory`.
+We then provide this to the Content Child by adding it to the `Providers` array using `useFactory`. This should allow `ngModelGroup` to get a reference to `NgForm` through dependency injection.
 
 [code example](https://stackblitz.com/edit/angular-form-projection-2)
 
 But this too is insufficient. The reason is that `useFactory()` runs before the template view is created, thus, the form reference it gets is still undefined.
 What we need to do is get this factory function to run *after* the view has been created.
 
-Kara discusses a solution using `ngTemplateOutlet` which I have implemented , but I have been unable to get it to work.
+Kara discusses a solution using `ngTemplateOutlet` which I have tried to implement, but I have been unable to get it to work.
 
 [code example](https://stackblitz.com/edit/angular-form-projection-3)
 
@@ -439,6 +436,3 @@ This is by far the best resource I've managed to find on advanced Angular form t
 * Another good resource regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
 
 * Ward Bell, wrote an [article](https://medium.com/@wardbell/wow-you-know-i-love-your-articles-we-are-almost-always-on-the-same-wave-length-11e0d53f7da3) about Reactive forms that mentions this talk. He remarks that he's somewhat confused by the section on nested forms.
-
-
-
