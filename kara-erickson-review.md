@@ -211,14 +211,12 @@ This seems to me to be the best way to do nested forms: It gives the greatest am
 ### Sub Form Component (SFC)
 [30:19](https://youtu.be/CD_t3m2WMM8?t=1819)
 
-[Sub Form Component using template driven form](https://stackblitz.com/edit/angular-sub-form-component)
-[Sub Form Component using reactive form](https://stackblitz.com/edit/angular-sub-form-component-reactive-form)
+The main difference between this and a Composite `ControlValueAccessor` is that this does not implement that interface. Unfortunately, this doesn't make it less complicated: Arguably, it's more so.
 
-The main difference between this an a CCC is that this does not implement the `ControlValueAccessor` interface. Unfortunately, this doesn't make it less complicated to implement: In fact, it's probably it's more complicated. Ward Bell, in an [article](https://medium.com/@wardbell/wow-you-know-i-love-your-articles-we-are-almost-always-on-the-same-wave-length-11e0d53f7da3) about Reactive forms that mentions this talk, comments about being confused by this section.
+Complicating things further is the fact that there's a couple of mistakes in the slides, which I'll point out.
+The first of these is at around 32:50 where the component is called 'RequiredText' instead of 'AddressComponent', as in the example. The released slides correct this error.
 
-It should be pointed out that there's a mistake in the slide shown at around 32:50 where the component is called 'RequiredText' instead of 'AddressComponent' as in the example. The released slides correct this error, but this could easily confuse people, as it did me.
-
-Let's have a closer look at what we mean by a *Sub Form Component*.
+Let's now have a closer look at what we mean by a *Sub Form Component*.
 
 Supposing we have a form which contains a firstName field, and a group of fields that comprise the address. We might organise this as follows:
 ```
@@ -244,29 +242,31 @@ Now supposing we want the address section to be its own component. We might crea
   </div>
 
 ```
-We might just expect this to work since we haven't changed the actual HTML in anyway, but in fact we end up with an error:
+We might just expect this to work since we haven't changed the actual HTML in anyway, but instead we get an error:
 ```
 Error: NodeInjector: NOT_FOUND [ControlContainer]
 ```
 
 So what's a `ControlContainer`?
-Angular docs says this:
+Angular docs says this of it:
 > A base class for directives that contain multiple registered instances of NgControl.
 
 If we look at the list of subclasses we see `NgForm` amongst them. From this we can deduce that the `ControlContainer` is in fact our form.
-What is happening is that our component is looking for NgForm in the injector but can't find it for some reason.
+What is happening is that our component is looking for `NgForm` in the injector but can't find it.
 The reason is that `NgForm` is configured that it will only inject an instance of ControlContainer if it exists in an injector that is not higher in the hierarchy of element injectors than that for the template of the host component. 
 
-The way to fix this is to provide NgForm within the viewProviders array of AddressComponent.
+The way to fix this is to provide `NgForm` within the `viewProviders` array of `AddressComponent`:
 ```
  viewProviders: [
     { provide: ControlContainer, useExisting: NgForm}
   ],
 ```
 
-But what if the ControlContainer isn't NgForm? After all, as we saw earlier, ControlContainer has many subclasses.
+But what if the `ControlContainer` isn't `NgForm`? After all, as we saw earlier, `ControlContainer` has many subclasses.
 
-Let's investigate. Imagine we change our form so that the address component has as its parent an ngModelGroup instead of an ngModelForm:
+Let's investigate. 
+
+Imagine we change our form so that the address component has as its parent an `ngModelGroup` instead of an `ngModelForm`:
 ```
 <form #form="ngForm">
 
@@ -293,9 +293,10 @@ We will find that our form data actually now looks like this:
   }
 }
 ```
-What has happened is that AddressComponent is still configured to see NgForm as its ControlContainer and cannot see the NgModelGroup at all.
+Contrary to what we might expect, `address` is not nested within `home`.
+What has happened is that the Address Component is still configured to see `NgForm` as its `ControlContainer` and cannot see the `NgModelGroup` at all.
 
-If we change viewProviders so that ControlContainer looks for an NgModelGroup instead:
+If we change viewProviders so that `ControlContainer` looks for an `NgModelGroup` instead:
 ``` 
 viewProviders: [
     { provide: ControlContainer, useExisting: NgModelGroup}
@@ -318,7 +319,9 @@ Then the form data looks like what we would like it to be:
 This illustrates an important constraint of Sub Form Components: You have to be careful about how you nest them as you may experience unexpected behaviour.
 This same constraint is why Sub Forms are not interchangeable with Reactive and Template Driven forms.
 
-Lets look at a Sub Form as implemented for Reactive forms.
+[code example](https://stackblitz.com/edit/angular-sub-form-component)
+
+Now lets look at a Sub Form as implemented in a Reactive form.
 
 Once we create this template within `AddressComponent`:
 ```
@@ -332,7 +335,7 @@ We get the following error
 ```
 Error: Cannot read property 'getFormGroup' of null
 ```
-As before, we register the ControlContainer in the viewProviders array, this time assigning it to be a FormGroupDirective instead of NgModelGroup:
+As before, we register the `ControlContainer` in the `viewProviders` array, this time assigning it to be a `FormGroupDirective` instead of `NgModelGroup`:
 ```
   viewProviders: [
     { provide: ControlContainer, useExisting: FormGroupDirective}
@@ -344,7 +347,7 @@ Now we get a different error:
 ERROR
 Error: Cannot find control with name: 'address'
 ```
-This is because the `address` FormGroup does not exist. We need to create it within AddressComponent. 
+This is because the `address` `FormGroup` does not exist. We need to create it within `AddressComponent`. 
 
 ```
   parent: FormGroupDirective;
@@ -362,8 +365,10 @@ This is because the `address` FormGroup does not exist. We need to create it wit
   }
 
 ```
-Note that there's a mistake in the slides. `this.form` within the constructor wont work because parent.form is null at this point.
-Discussion [here](https://github.com/angular/angular/issues/23914)
+In the slides for this there's another mistake.`this.form` within the constructor wont work because parent.form is null at this point.
+There's a discussion about this [here](https://github.com/angular/angular/issues/23914)
+ 
+[code example](https://stackblitz.com/edit/angular-sub-form-component-reactive-form)
 
 ## Form Projection
 [36:54](https://youtu.be/CD_t3m2WMM8?t=2214)
@@ -375,54 +380,65 @@ E.g, you have a wrapper component something like this:
   <ng-content></ng-content>
 </form>
 ```
-And it's used something like this:
+And it's used like this:
 ```
 <wrapper-component>
   <input />
 </wrapper-component>
 ```
+the `<input/>` element will be *projected* into the form so that the final DOM looks like:
+```
+<form>
+  <input/>
+</form>
+```
 This approach is somewhat complex to get working and Kara advises against it, nonetheless she shows a way of making it work.
 
 In the demo, this is the content that is being projected into a form:
 ```
-    <div ngModelGroup="address">
-       <input name="street" ngModel/>
-       <input name="city" ngModel/>
-    </div>
+  <div ngModelGroup="address">
+    <input name="street" ngModel/>
+    <input name="city" ngModel/>
+  </div>
 ```
-[here](https://stackblitz.com/edit/angular-form-projection-1) is a demo that shows this.
+[code example](https://stackblitz.com/edit/angular-form-projection-1) is a demo that shows this.
 
 Note the error message:
 ```
 NodeInjector: NOT_FOUND [ControlContainer]
 ```
-This is similar to the error we got with Sub Form components.
-The problem is that `ngModelGroup` cannot find it's container. Given what we know about component boundaries, this is not surprising. Obviously, it's complicated by the fact that we're dealing with projected content. The Content Child is looking for the form directive that lives in the View Child, but these entities are able to directly communicate with each other. 
+This is the same error we got with Sub Form components.
+Once again, `ngModelGroup` cannot find it's `ControlContainer`: the `NgForm` directive. 
+The same solution will not work here though as the situation is a little different:
+For the `FormStepper` component we have a View Child, in which the `<form>` exists, and a Content Child, where we find the `<input/>` elements.
+The View Child and the Content Child are not able to directly contact each other: they must do so through the component.
 
-Now we provide the ControlContainer in a factory. This gives us a different error
-If we can register the form in the host component's injector, the Content Child will have access to it. So the trick is to obtain the form from the view child using a @ViewChild query, then make this available to the Content Child by registering it in the component's providers array using a factory. 
-[here](https://stackblitz.com/edit/angular-form-projection-2) is a demo of this.
+Within the component, we obtain the `NgForm` directive using a `@ViewChild` query.
+We then provide this to the Content Child by adding it to the `Providers` array using `useFactory`.
 
-This gives us a different error.
-```
-Error:
-ngModelGroup cannot be used with a parent formGroup directive.
-```
-I don't fully understand this error, but the problem with the code as it stands is that the factory function runs *before* the view is initialised. Thus it gets a reference to the form that is `undefined`.
-Kara discusses a solution using `ngTemplateOutlet` which I have implemented [here](https://stackblitz.com/edit/angular-form-projection-3), but I have been unable to get it to work.
+[code example](https://stackblitz.com/edit/angular-form-projection-2)
+
+But this too is insufficient. The reason is that `useFactory()` runs before the template view is created, thus, the form reference it gets is still undefined.
+What we need to do is get this factory function to run *after* the view has been created.
+
+Kara discusses a solution using `ngTemplateOutlet` which I have implemented , but I have been unable to get it to work.
+
+[code example](https://stackblitz.com/edit/angular-form-projection-3)
 
 It's not clear to me that it's possible for it to work.
-[This experiment](https://stackblitz.com/edit/angular-projection-experiment) shows that the factory runs before the view is initialised and so the form that it attempts to register in the injector is still undefined. Why should using `ngTemplateOutlet` make the factory run later?
 
-It seems to me that the `ngModelGroup` directive should be instantiated when the content template is created. At that point, the injector should call the factory and inject the form into the directive. But the form at this point is undefined. What we need is to be able to instantiate the Content Child after the View, but I don't know how to do this.
+I can't honestly see why `ngTemplateOutlet` rather than `ng-content` for inserting the Content Children should make any difference to when the factory is called.
+[This experiment](https://stackblitz.com/edit/angular-projection-experiment) shows that the factory runs before the view is initialised and so the form that it attempts to register in the injector is still undefined. 
 
-I have posted a question on Stackoverflow to see if anyone else has an answer to this problem, but for the moment I do not know how to solve it.
+I have posted a [question](https://stackoverflow.com/questions/65008417/how-to-implement-form-projection-in-angular) on Stackoverflow to see if anyone else has an answer to this problem, but for the moment I'm stuck.
 
 ## Conclusion
-This is by far the best resource I've managed to find on advanced Angular form techniques. It's sad that it has some serious shortcomings. The main one is that no code was ever supplied for it. I have tried my best to create this code myself but unfortunately I was unable to do so for form projection. I hope that readers of this are able to benefit from where I was successful and are able to assist me in those places where I wasn't.
+This is by far the best resource I've managed to find on advanced Angular form techniques. It's frustrating that the code for it was never released. I have tried my best to create this code myself but unfortunately I was unable to do so for form projection. I hope that readers of this are able to benefit from where I was successful and are able to assist me in those places where I wasn't.
 
 ## Resources
-Another good resource regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
+* Another good resource regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
+
+* Ward Bell, wrote an [article](https://medium.com/@wardbell/wow-you-know-i-love-your-articles-we-are-almost-always-on-the-same-wave-length-11e0d53f7da3) about Reactive forms that mentions this talk. He remarks that he's somewhat confused by the section on nested forms.
 
 
 
