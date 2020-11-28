@@ -101,7 +101,7 @@ The `thisInput` template variable refers to the `<input/>` element and is given 
 ### Registering with the local injector
 [15:41](https://youtu.be/CD_t3m2WMM8?t=941)
 
-Having implemented a `ControlValueAccessor`, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the NG_VALUE_ACCESSOR token.
+Having implemented a `ControlValueAccessor`, we need to let Angular's Form API know about it. We do this by registering it with the local injector using the `NG_VALUE_ACCESSOR` token.
 ``` 
 // in RequiredText
 providers: [
@@ -121,20 +121,35 @@ The `multi` property means that we can register multiple providers with the toke
 ### Validation
 [16:12](https://youtu.be/CD_t3m2WMM8?t=972)
 
-Validation is achieved by implementing the Validator interface and registering the component using NG_VALIDATORS with the local injector. 
-// show code excerpts
-// link to stackblitz 
+Validation is achieved by implementing the Validator interface and registering the component using `NG_VALIDATORS` with the local injector. 
+```
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      multi: true,
+      useExisting: RequiredTextComponent,
+    },
+    {
+      provide: NG_VALIDATORS,
+      multi: true,
+      useExisting: RequiredTextComponent,
+    }
+  ],
+```
+
+[code example](https://stackblitz.com/edit/angular-required-text-component-with-validation)
 
 ### Error Messages
 [19:10](https://youtu.be/CD_t3m2WMM8?t=1150)
 
-How do we show error messages from within the component itself?
-The problem is that we need to know the validation status of the form control within the component itself, but currently we do not have a reference to this form control. So how do we get this reference?
-One approach is to provide it as an input to our component:
+In order to show error messages within the component itself, we need to get a reference to the components form control. How do we get this?
+One approach is to provide it as an input to our component.
+This is how we'd do it in a reactive form:
 ```
 <required-text formControlName="three" [control]="form.get('three')"></required-text>
 ```
-Clearly, though, it would be nicer to not have to do this. It's extra code that we have to write and extra "noise" when looking at the template.
+
+Clearly, though, it would be nicer to not have to do this. It's extra code that we have to write and extra "noise" when reading through the code.
 
 Better is to use Dependency Injection and inject the form control into our component through its constructor function.
 
@@ -147,7 +162,7 @@ We specify `NgControl` as the provider as it is the super-type of all form direc
 
 The @Self decorator is necessary so that we don't look beyond the local element injector for the NgControl instance.
 
-However, now that we are injecting NgControl, we can have a circular dependency because NgControl, (or rather the instances of it, e.g. NgModel), is injecting both `NG_VALUE_ACCESSOR` and `NG_VALIDATOR`, therefore we need to not provide these in our component. This means we have to manually "wire" our component up with the Angular Forms API and add validators to it.
+However, now that we are injecting `NgControl`, we can have a circular dependency because `NgControl`, (or rather the instances of it, e.g. `NgModel`), is injecting both `NG_VALUE_ACCESSOR` and `NG_VALIDATOR`, therefore we need to not provide these in our component. This means we have to manually "wire" our component up with the Angular Forms API and add validators to it.
 
 ```
 constructor(@Self() public controlDir: NgControl) {
@@ -171,24 +186,27 @@ We just query the form control for properties such as `valid` and `pristine` and
 ```
   <div *ngIf="controlDir && !controlDir.control.pristine &&!controlDir.control.valid" class="error">There was an error</div>
 ```
+[code example](https://stackblitz.com/edit/angular-custom-form-control-3)
 
 ## Nested Forms
 [25:22 ](https://youtu.be/CD_t3m2WMM8?t=1522)
 
 A *nested form* is a component that comprises part of a form. A common example is of an address component that contains separate fields for street, city, postcode etc. The motivation for having a nested form is similar to that of a Custom Form Component - to group related behaviour, for ease of re-use etc.
 
-There are two kinds of nested form components (NFCs) that Kara talks about.
-* *Composite ControlValueAccessor Component*: A ControlValueAccessor component which contains an arbitrary number of form controls instead of just one.
-* *Sub Form Component*: A Component that contains a form fragment but does not implement the ControlValueAccessor interface.
+There are two kinds of nested form components that Kara talks about.
+* *Composite ControlValueAccessor Component*: A `ControlValueAccessor` component which contains an arbitrary number of form controls instead of just one.
+* *Sub Form Component*: A Component that contains a form fragment but does not implement the `ControlValueAccessor` interface.
 
 ### Composite ControlValueAccessor Component (CCC)
 [26:25](https://youtu.be/CD_t3m2WMM8?t=1585)
- 
-[stackblitz example](https://stackblitz.com/edit/angular-composite-control-value-accessor)
 
-Implementing a CCC is largely the same as implementing a CFC. Kara doesn't say anything about validation. Whilst validation and error messages can be self-contained within the component, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
+Implementing a Composite `ControlValueAccessor` is largely the same as implementing the kind that we've already seen. 
 
-This seems to me to be the best way to do nested forms: It gives the greatest amount of flexibility and reusability. The component works in the same way as a native input element making it easier to compose complex forms out of them.
+In the talk, Kara doesn't say anything about validation. Whilst validation and error messages can be self-contained within the component, and we don't have to pass in the form control, it's important to implement the `validate()` method so that the component's valid status stays in sync with the containing form.
+
+This seems to me to be the best way to do nested forms: It gives the greatest amount of flexibility and reusability. The component works in the same way as a native input element, making it easier to compose complex forms with them.
+
+[code example](https://stackblitz.com/edit/angular-composite-control-value-accessor)
 
 ### Sub Form Component (SFC)
 [30:19](https://youtu.be/CD_t3m2WMM8?t=1819)
