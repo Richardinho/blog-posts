@@ -14,6 +14,8 @@ The first nine minutes of the talk comprises a refresher on Angular forms and an
 A Custom Form Control (CFC) is a directive that implements the `ControlValueAccessor` interface. This results in the directive being able to integrate with Angular's Form API. It can be used in Angular just as any native input element can be and works with both Reactive and Template Driven forms
 
 ### Why would you want to use them?
+[9:15](https://youtu.be/CD_t3m2WMM8?t=555)
+
 The reason you would create a Custom Form Control is the same as for components in general:
 * to break up a template into smaller pieces 
 * to enable encapsulation
@@ -26,17 +28,21 @@ Some specific examples are:
 * Parser / formatter directive
 
 ### Implementing the ControlValueAccessor interface
+[12:25](https://youtu.be/CD_t3m2WMM8?t=745)
+
 The `ControlValueAccessor` interface looks like this, comprising 3 required methods and 1 optional one:
 ```
- writeValue(value: any) {}
- registerOnChange(fn: (value: any) => void) {}
- registerOnTouched(fn: () => void) {}
- setDisabledState(isDisabled: boolean) {}
+  writeValue(value: any) {}
+  registerOnChange(fn: (value: any) => void) {}
+  registerOnTouched(fn: () => void) {}
+  setDisabledState(isDisabled: boolean) {}
 ```
 I'm going to go through some problems I had implementing the first two of these methods.
 The two remaining methods, `registerOnTouched()` and `setDisabledState()` were straightforward to implement and didn't present me with problems.
 
 ### writeValue()
+[14:30](https://youtu.be/CD_t3m2WMM8?t=870)
+
 The `writeValue(`) method is called by the forms API to set values into our component within the DOM.
 In order to do this we need a reference to our input field. We can retrieve this from our template using a `@ViewChild` query.
 ```
@@ -152,9 +158,9 @@ constructor(@Self() public controlDir: NgControl) {
 Similarily, we can configure the validators within ngOnInit()
 ```
 ngOnInit() {
- const control = this.controlDir.control;
- control.setValidators(Validators.required);
- control.updateValueAndValidity();
+  const control = this.controlDir.control;
+  control.setValidators(Validators.required);
+  control.updateValueAndValidity();
 }
 ```
 We can also remove the `validate()` method if we've got it as we're not longer doing validation that way.
@@ -187,7 +193,6 @@ This seems to me to be the best way to do nested forms as its the most reusable 
 ### Sub Form Component (SFC)
 [30:19](https://youtu.be/CD_t3m2WMM8?t=1819)
 
-
 [Sub Form Component using template driven form](https://stackblitz.com/edit/angular-sub-form-component)
 [Sub Form Component using reactive form](https://stackblitz.com/edit/angular-sub-form-component-reactive-form)
 
@@ -216,8 +221,8 @@ Now supposing we want the address section to be its own component. We might crea
 
 ```
    <div ngModelGroup="address">
-    <input ngModel name="city"/>
-    <input ngModel name="postcode"/>
+     <input ngModel name="city"/>
+     <input ngModel name="postcode"/>
   </div>
 
 ```
@@ -312,7 +317,7 @@ Error: Cannot read property 'getFormGroup' of null
 As before, we register the ControlContainer in the viewProviders array, this time assigning it to be a FormGroupDirective instead of NgModelGroup:
 ```
   viewProviders: [
-   { provide: ControlContainer, useExisting: FormGroupDirective}
+    { provide: ControlContainer, useExisting: FormGroupDirective}
   ],
   ```
   
@@ -349,13 +354,13 @@ Form projection is where you project content into a form element.
 E.g, you have a wrapper component something like this:
 ```
 <form>
- <ng-content></ng-content>
+  <ng-content></ng-content>
 </form>
 ```
 And it's used something like this:
 ```
 <wrapper-component>
- <input />
+  <input />
 </wrapper-component>
 ```
 This approach is somewhat complex to get working and Kara advises against it, nonetheless she shows a way of making it work.
@@ -363,8 +368,8 @@ This approach is somewhat complex to get working and Kara advises against it, no
 In the demo, this is the content that is being projected into a form:
 ```
     <div ngModelGroup="address">
-      <input name="street" ngModel/>
-      <input name="city" ngModel/>
+       <input name="street" ngModel/>
+       <input name="city" ngModel/>
     </div>
 ```
 [here](https://stackblitz.com/edit/angular-form-projection-1) is a demo that shows this.
