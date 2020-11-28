@@ -345,52 +345,61 @@ Discussion [here](https://github.com/angular/angular/issues/23914)
 ## Form Projection
 [36:54](https://youtu.be/CD_t3m2WMM8?t=2214)
 
-Form projection is where you project content into a form element. So if you have a component `FormStepperComponent` with a template:
+Form projection is where you project content into a form element. 
+E.g, you have a wrapper component something like this:
 ```
-  <form>
-    <ng-content></ng-content>
-  </form>
+<form>
+ <ng-content></ng-content>
+</form>
 ```
-and you use it in another template as follows:
+And it's used something like this:
 ```
-<form-stepper>
-  <step>
-    <div>form content</div>
-    
+<wrapper-component>
+ <input />
+</wrapper-component>
+```
+This approach is somewhat complex to get working and Kara advises against it, nonetheless she shows a way of making it work.
+
+In the demo, this is the content that is being projected into a form:
+```
     <div ngModelGroup="address">
       <input name="street" ngModel/>
       <input name="city" ngModel/>
     </div>
-  </step>
-</form-stepper>
 ```
-[version 1 of form projection](https://stackblitz.com/edit/angular-form-projection-1)
+[here](https://stackblitz.com/edit/angular-form-projection-1) is a demo that shows this.
 
 Note the error message:
 ```
 NodeInjector: NOT_FOUND [ControlContainer]
 ```
 This is similar to the error we got with Sub Form components.
-
+The problem is that `ngModelGroup` cannot find it's container. Given what we know about component boundaries, this is not surprising. Obviously, it's complicated by the fact that we're dealing with projected content. The Content Child is looking for the form directive that lives in the View Child, but these entities are able to directly communicate with each other. 
 
 Now we provide the ControlContainer in a factory. This gives us a different error
-[version 2 of form projection](https://stackblitz.com/edit/angular-form-projection-2)
+If we can register the form in the host component's injector, the Content Child will have access to it. So the trick is to obtain the form from the view child using a @ViewChild query, then make this available to the Content Child by registering it in the component's providers array using a factory. 
+[here](https://stackblitz.com/edit/angular-form-projection-2) is a demo of this.
 
+This gives us a different error.
 ```
 Error:
 ngModelGroup cannot be used with a parent formGroup directive.
 ```
+I don't fully understand this error, but the problem with the code as it stands is that the factory function runs *before* the view is initialised. Thus it gets a reference to the form that is `undefined`.
+Kara discusses a solution using `ngTemplateOutlet` which I have implemented [here](https://stackblitz.com/edit/angular-form-projection-3), but I have been unable to get it to work.
 
-I have tried to implement the code described in Kara's talk as closely as possible but I still get the same error as described above.
-[version 3 of form projection](https://stackblitz.com/edit/angular-form-projection-3)
+It's not clear to me that it's possible for it to work.
+[This experiment](https://stackblitz.com/edit/angular-projection-experiment) shows that the factory runs before the view is initialised and so the form that it attempts to register in the injector is still undefined. Why should using `ngTemplateOutlet` make the factory run later?
 
-
-[This experiment](https://stackblitz.com/edit/angular-projection-experiment) shows that the factory runs before the view is initialised and so the form that it attempts to register in the injector is still undefined.
+It seems to me that the `ngModelGroup` directive should be instantiated when the content template is created. At that point, the injector should call the factory and inject the form into the directive. But the form at this point is undefined. What we need is to be able to instantiate the Content Child after the View, but I don't know how to do this.
 
 I have posted a question on Stackoverflow to see if anyone else has an answer to this problem, but for the moment I do not know how to solve it.
 
+## Conclusion
+This is by far the best resource I've managed to find on advanced Angular form techniques. It's sad that it has some serious shortcomings. The main one is that no code was ever supplied for it. I have tried my best to create this code myself but unfortunately I was unable to do so for form projection. I hope that readers of this are able to benefit from where I was successful and are able to assist me in those places where I wasn't.
+
 ## Resources
-Besides this talk that we are discussing, the best resource online that I have found regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
+Another good resource regarding the `ControlValueAccessor` interface is [this blog](https://jenniferwadella.com/blog/understanding-angulars-control-value-accessor-interface) by Jennifer Wadella. She also does some talks on the same subject that can be found on YouTube.
 
 
 
